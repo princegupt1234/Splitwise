@@ -86,16 +86,15 @@ const ExpenseHistory = () => {
 
         {/* Group tabs */}
         {groups.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {groups.map((g) => (
               <button
                 key={g._id}
                 onClick={() => handleGroupChange(g)}
-                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  activeGroup?._id === g._id
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
+                className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-all"
+                style={activeGroup?._id === g._id
+                  ? { background: 'rgba(101,116,243,0.2)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.35)' }
+                  : { background: 'rgba(255,255,255,0.04)', color: '#5a5d70', border: '1px solid rgba(255,255,255,0.07)' }}
               >
                 {g.name}
               </button>
@@ -104,12 +103,13 @@ const ExpenseHistory = () => {
         )}
 
         {/* Category filter */}
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <button
             onClick={() => handleCategoryChange('')}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-              !filterCategory ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-            }`}
+            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+            style={!filterCategory
+              ? { background: 'rgba(101,116,243,0.2)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.35)' }
+              : { background: 'rgba(255,255,255,0.04)', color: '#5a5d70', border: '1px solid rgba(255,255,255,0.07)' }}
           >
             All
           </button>
@@ -117,9 +117,10 @@ const ExpenseHistory = () => {
             <button
               key={cat}
               onClick={() => handleCategoryChange(cat)}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                filterCategory === cat ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-              }`}
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+              style={filterCategory === cat
+                ? { background: 'rgba(101,116,243,0.2)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.35)' }
+                : { background: 'rgba(255,255,255,0.04)', color: '#5a5d70', border: '1px solid rgba(255,255,255,0.07)' }}
             >
               {CATEGORY_ICONS[cat]} {cat}
             </button>
@@ -157,26 +158,26 @@ const ExpenseHistory = () => {
         ) : (
           <div className="space-y-2">
             {expenses.map((expense) => (
-              <div key={expense._id} className="card p-4 hover:shadow-md transition-shadow">
+              <div key={expense._id} className="card p-4">
                 <div className="flex items-start gap-3">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${CATEGORY_COLORS[expense.category]}`}>
                     {CATEGORY_ICONS[expense.category]}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">{expense.title}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-white text-sm truncate">{expense.title}</p>
+                        <p className="text-xs mt-0.5" style={{ color: '#4a4d5e' }}>
                           Paid by {expense.paidBy?._id === user._id ? 'You' : expense.paidBy?.name}
                           {' · '}{formatDate(expense.date)}
                         </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        <p className="text-xs mt-0.5 truncate" style={{ color: '#3a3d50' }}>
                           Split: {expense.splitAmong?.map((m) => m._id === user._id ? 'You' : m.name).join(', ')}
                         </p>
                       </div>
-                      <div className="flex-shrink-0 text-right">
-                        <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(expense.amount)}</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                      <div className="flex-shrink-0 text-right ml-2">
+                        <p className="font-bold text-white">{formatCurrency(expense.amount)}</p>
+                        <p className="text-xs" style={{ color: '#4a4d5e' }}>
                           ₹{(expense.amount / (expense.splitAmong?.length || 1)).toFixed(0)}/ea
                         </p>
                       </div>
@@ -185,10 +186,11 @@ const ExpenseHistory = () => {
                 </div>
 
                 {expense.createdBy?._id === user._id && (
-                  <div className="flex justify-end mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 gap-3">
+                  <div className="flex justify-end mt-3 pt-3 gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                     <button
                       onClick={() => handleDelete(expense._id)}
-                      className="text-xs text-red-500 hover:text-red-700 font-medium"
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg min-h-[32px]"
+                      style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.15)' }}
                     >
                       Delete
                     </button>

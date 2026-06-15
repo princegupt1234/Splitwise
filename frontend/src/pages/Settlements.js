@@ -188,16 +188,16 @@ const Settlements = () => {
       <div className="py-5 space-y-4">
 
         {/* ── Header ── */}
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex items-start justify-between pt-1 gap-3">
           <h1 className="text-xl font-bold text-white">Settlements</h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button onClick={() => setDetailsOpen(true)} disabled={!activeGroup} className="btn-secondary text-xs px-3 py-2">
-              View Details
+              Details
             </button>
             <button onClick={handleGenerate} disabled={generating || !activeGroup}
-              className="btn-secondary text-sm px-3 py-2 flex items-center gap-1.5">
+              className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5">
               {generating ? <Spinner size="sm" /> : <span>🔄</span>}
-              {generating ? 'Calculating…' : 'Recalculate'}
+              {generating ? 'Calc…' : 'Recalc'}
             </button>
           </div>
         </div>

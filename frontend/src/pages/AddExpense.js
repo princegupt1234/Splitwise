@@ -149,7 +149,7 @@ const AddExpense = () => {
                 <span className="text-3xl font-light text-gray-400 mr-1">₹</span>
                 <input
                   type="number"
-                  className="text-5xl font-bold text-gray-900 dark:text-white bg-transparent border-none outline-none text-center w-48"
+                  className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white bg-transparent border-none outline-none text-center w-full max-w-[200px]"
                   placeholder="0"
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
@@ -181,7 +181,7 @@ const AddExpense = () => {
             {/* Category */}
             <div>
               <label className="label">Category</label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}

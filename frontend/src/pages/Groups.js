@@ -40,8 +40,7 @@ export const CreateGroup = () => {
         <div className="card p-6">
           <div className="text-center mb-6">
             <div className="text-5xl mb-2">🏘️</div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Create a flat group and share the code with your flatmates</p>
-          </div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Create a flat group and share the code with your flatmates</p>          </div>
 
           {error && <div className="mb-4"><Alert type="error" message={error} onClose={() => setError('')} /></div>}
 
@@ -210,18 +209,15 @@ export const GroupDetail = () => {
       <div className="py-5 space-y-5">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl">←</button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{group?.name}</h1>
+          <h1 className="text-2xl font-bold text-white">{group?.name}</h1>
         </div>
 
         {/* Group code card */}
         <div className="card p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Share this code with your flatmates</p>
-          <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-            <span className="text-3xl font-mono font-bold tracking-widest text-primary-600 dark:text-primary-400">{group?.code}</span>
-            <button
-              onClick={handleCopyCode}
-              className="btn-secondary text-sm px-4 py-2"
-            >
+          <p className="text-sm mb-2" style={{ color: '#4a4d5e' }}>Share this code with your flatmates</p>
+          <div className="flex items-center justify-between rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <span className="text-2xl sm:text-3xl font-mono font-bold tracking-widest" style={{ color: '#8196f8' }}>{group?.code}</span>
+            <button onClick={handleCopyCode} className="btn-secondary text-sm px-4 py-2">
               {copied ? '✓ Copied' : 'Copy'}
             </button>
           </div>
@@ -230,10 +226,10 @@ export const GroupDetail = () => {
         {/* Members */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900 dark:text-white">Members ({group?.members?.length})</h2>
-            <button
-              onClick={() => setInviteModal(true)}
-              className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline"
+            <h2 className="font-semibold text-white">Members ({group?.members?.length})</h2>
+            <button onClick={() => setInviteModal(true)}
+              className="text-sm font-semibold px-3 py-1.5 rounded-lg"
+              style={{ background: 'rgba(101,116,243,0.1)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.18)' }}
             >
               + Invite
             </button>
@@ -242,21 +238,24 @@ export const GroupDetail = () => {
             {group?.members?.map((member) => (
               <div key={member._id} className="flex items-center gap-3">
                 <Avatar name={member.name} size="md" />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900 dark:text-white text-sm">{member.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">@{member.username}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-white text-sm truncate">{member.name}</p>
+                  <p className="text-xs" style={{ color: '#4a4d5e' }}>@{member.username}</p>
                 </div>
                 {group.createdBy._id === member._id && (
-                  <span className="text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 px-2 py-0.5 rounded-full">Admin</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={{ background: 'rgba(101,116,243,0.15)', color: '#8196f8' }}>Admin</span>
                 )}
                 {member._id === user._id && (
-                  <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 px-2 py-0.5 rounded-full">You</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={{ background: 'rgba(255,255,255,0.06)', color: '#4a4d5e' }}>You</span>
                 )}
                 {isAdmin && member._id !== user._id && member._id !== group.createdBy._id && (
                   <button
                     onClick={() => handleRemoveMember(member._id, member.name)}
                     disabled={removingId === member._id}
-                    className="text-xs text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 font-semibold bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 rounded-full transition-colors disabled:opacity-50"
+                    className="text-xs font-semibold px-2.5 py-1 rounded-full transition-all disabled:opacity-50 flex-shrink-0"
+                    style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}
                   >
                     {removingId === member._id ? '…' : 'Remove'}
                   </button>

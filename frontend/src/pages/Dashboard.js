@@ -168,7 +168,7 @@ const Dashboard = () => {
 
               {/* Group card */}
               {activeGroup && (
-                <div className="card p-5 flex items-center justify-between gap-4">
+                <div className="card p-4 sm:p-5 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-4">
                     <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl"
                       style={{ background: 'rgba(101,116,243,0.12)', border: '1px solid rgba(101,116,243,0.2)' }}>
@@ -208,11 +208,11 @@ const Dashboard = () => {
             ) : summary ? (
               <div className="space-y-4">
 
-                {/* ── Row 3 · Balance (65%) + Stats (35%) ── */}
-                <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', alignItems: 'stretch' }}>
+                {/* ── Row 3 · Balance + Stats ── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ alignItems: 'stretch' }}>
 
                   {/* Balance hero card */}
-                  <div className="relative overflow-hidden rounded-[20px] p-6 flex flex-col justify-between min-h-[200px]"
+                  <div className="relative overflow-hidden rounded-[20px] p-5 sm:p-6 flex flex-col justify-between min-h-[180px] sm:min-h-[200px]"
                     style={{
                       background: balZero
                         ? 'linear-gradient(135deg, #0f4c35 0%, #065f46 50%, #047857 100%)'
@@ -231,7 +231,7 @@ const Dashboard = () => {
                       <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
                         Your Balance
                       </p>
-                      <p className="text-4xl font-bold text-white tracking-tight mt-1">
+                      <p className="text-3xl sm:text-4xl font-bold text-white tracking-tight mt-1">
                         {balPositive && !balZero ? '+' : ''}{formatCurrency(bal)}
                       </p>
                       <p className="text-sm mt-2" style={{ color: 'rgba(255,255,255,0.65)' }}>
@@ -273,10 +273,10 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                {/* ── Row 4 · Quick Actions (full width on mobile, 4-col on desktop) ── */}
+                {/* ── Row 4 · Quick Actions ── */}
                 <div>
                   <SectionLabel>Quick Actions</SectionLabel>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     {QUICK_ACTIONS.map((a) => (
                       <Link key={a.to} to={a.to}
                         className="card p-4 flex flex-col gap-3 transition-all duration-200 group"

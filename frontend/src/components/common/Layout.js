@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -47,10 +47,33 @@ const NAV = [
   },
 ];
 
+const HamburgerIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="w-5 h-5">
+    <path d="M3 6h18M3 12h18M3 18h18"/>
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="w-5 h-5">
+    <path d="M18 6L6 18M6 6l12 12"/>
+  </svg>
+);
+
 const Layout = ({ children }) => {
   const { user } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Close drawer on route change
+  useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [drawerOpen]);
+
   const isActive = (p) => location.pathname.startsWith(p);
 
   const bg         = 'var(--bg-base)';
@@ -61,56 +84,54 @@ const Layout = ({ children }) => {
   const mutedText  = isDark ? '#4a4d5e' : '#9197a3';
   const labelText  = isDark ? '#e8eaf0'  : '#111318';
 
-  return (
-    <div className="min-h-screen flex" style={{ background: bg, color: 'var(--text-base)' }}>
+  const SidebarContent = ({ compact }) => (
+    <>
+      <Link to="/dashboard" className={`flex items-center gap-3 mb-8 ${compact ? 'justify-center px-0' : 'px-3'}`}>
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg, #4f56e8, #6574f3)', boxShadow: '0 4px 12px rgba(101,116,243,0.4)' }}>
+          <span className="text-white font-bold text-sm">F</span>
+        </div>
+        {!compact && <span className="font-bold tracking-tight" style={{ color: labelText }}>FlatSplit</span>}
+      </Link>
 
-      {/* ── Left Sidebar (desktop) ── */}
-      <aside className="hidden sm:flex flex-col fixed left-0 top-0 bottom-0 w-56 z-40 py-6 px-3"
-        style={{ background: surface, borderRight: `1px solid ${border}` }}>
+      <nav className="flex flex-col gap-1 flex-1">
+        {NAV.map(({ path, label, icon }) => {
+          const active = isActive(path);
+          return (
+            <Link key={path} to={path}
+              className={`flex items-center gap-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150 ${compact ? 'justify-center px-2' : 'px-3'}`}
+              title={compact ? label : undefined}
+              style={active ? {
+                background: 'rgba(101,116,243,0.15)',
+                color: activeText,
+                border: '1px solid rgba(101,116,243,0.2)',
+              } : {
+                color: mutedText,
+                border: '1px solid transparent',
+              }}>
+              {icon}
+              {!compact && label}
+              {!compact && active && <span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ background: activeText }} />}
+            </Link>
+          );
+        })}
+      </nav>
 
-        <Link to="/dashboard" className="flex items-center gap-3 px-3 mb-8">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #4f56e8, #6574f3)', boxShadow: '0 4px 12px rgba(101,116,243,0.4)' }}>
-            <span className="text-white font-bold text-sm">F</span>
-          </div>
-          <span className="font-bold tracking-tight" style={{ color: labelText }}>FlatSplit</span>
-        </Link>
+      <div className={`mt-auto flex flex-col gap-3 ${compact ? 'items-center px-0' : 'px-1'}`}>
+        <button onClick={toggleTheme}
+          className={`flex items-center gap-3 py-2.5 rounded-2xl text-sm font-medium transition-all ${compact ? 'justify-center px-2 w-10' : 'px-3 w-full text-left'}`}
+          title={compact ? (isDark ? 'Light mode' : 'Dark mode') : undefined}
+          style={{ color: mutedText, border: '1px solid transparent' }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] flex-shrink-0">
+            {isDark
+              ? <><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></>
+              : <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+            }
+          </svg>
+          {!compact && (isDark ? 'Light mode' : 'Dark mode')}
+        </button>
 
-        <nav className="flex flex-col gap-1 flex-1">
-          {NAV.map(({ path, label, icon }) => {
-            const active = isActive(path);
-            return (
-              <Link key={path} to={path}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150"
-                style={active ? {
-                  background: 'rgba(101,116,243,0.15)',
-                  color: activeText,
-                  border: '1px solid rgba(101,116,243,0.2)',
-                } : {
-                  color: mutedText,
-                  border: '1px solid transparent',
-                }}>
-                {icon}
-                {label}
-                {active && <span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ background: activeText }} />}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="mt-auto flex flex-col gap-3 px-1">
-          <button onClick={toggleTheme}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all w-full text-left"
-            style={{ color: mutedText, border: '1px solid transparent' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
-              {isDark
-                ? <><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></>
-                : <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
-              }
-            </svg>
-            {isDark ? 'Light mode' : 'Dark mode'}
-          </button>
-
+        {!compact && (
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-2xl"
             style={{ background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)', border: `1px solid ${border}` }}>
             <Avatar name={user?.name} size="sm" />
@@ -119,24 +140,92 @@ const Layout = ({ children }) => {
               <p className="text-xs truncate" style={{ color: mutedText }}>@{user?.username}</p>
             </div>
           </div>
-        </div>
+        )}
+
+        {compact && <Avatar name={user?.name} size="sm" />}
+      </div>
+    </>
+  );
+
+  return (
+    <div className="min-h-screen flex" style={{ background: bg, color: 'var(--text-base)' }}>
+
+      {/* ── Desktop Sidebar (lg+) ── */}
+      <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-56 z-40 py-6 px-3"
+        style={{ background: surface, borderRight: `1px solid ${border}` }}>
+        <SidebarContent compact={false} />
       </aside>
 
+      {/* ── Tablet Icon Sidebar (md–lg) ── */}
+      <aside className="hidden md:flex lg:hidden flex-col fixed left-0 top-0 bottom-0 w-16 z-40 py-6 px-2 items-center"
+        style={{ background: surface, borderRight: `1px solid ${border}` }}>
+        <SidebarContent compact={true} />
+      </aside>
+
+      {/* ── Mobile Drawer Overlay ── */}
+      {drawerOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm md:hidden"
+          onClick={() => setDrawerOpen(false)}
+        />
+      )}
+
+      {/* ── Mobile Drawer ── */}
+      <aside
+        className="fixed left-0 top-0 bottom-0 w-64 z-50 py-6 px-3 flex flex-col md:hidden transition-transform duration-300"
+        style={{
+          background: isDark ? '#0f1117' : '#f2f3f7',
+          borderRight: `1px solid ${border}`,
+          transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
+        }}
+      >
+        <button
+          onClick={() => setDrawerOpen(false)}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
+          style={{ background: 'rgba(255,255,255,0.08)', color: mutedText }}
+        >
+          <CloseIcon />
+        </button>
+        <SidebarContent compact={false} />
+      </aside>
+
+      {/* ── Mobile Top Bar ── */}
+      <header className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 h-14"
+        style={{ background: navBg, borderBottom: `1px solid ${border}`, backdropFilter: 'blur(20px)' }}>
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="w-9 h-9 rounded-xl flex items-center justify-center"
+          style={{ background: 'rgba(255,255,255,0.06)', color: mutedText }}
+        >
+          <HamburgerIcon />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #4f56e8, #6574f3)' }}>
+            <span className="text-white font-bold text-xs">F</span>
+          </div>
+          <span className="font-bold text-sm tracking-tight" style={{ color: labelText }}>FlatSplit</span>
+        </div>
+        <Avatar name={user?.name} size="sm" />
+      </header>
+
       {/* ── Main content ── */}
-      <div className="flex-1 sm:ml-56 min-h-screen pb-20 sm:pb-0">
-        <main className="px-4 sm:px-8 py-6 max-w-6xl mx-auto">
+      <div className="flex-1 min-h-screen md:ml-16 lg:ml-56">
+        {/* spacer for mobile top bar */}
+        <div className="h-14 md:hidden" />
+        <main className="px-4 md:px-6 lg:px-8 py-5 max-w-6xl mx-auto pb-24 md:pb-8">
           {children}
         </main>
       </div>
 
       {/* ── Mobile bottom nav ── */}
-      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 flex"
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex"
         style={{ background: navBg, borderTop: `1px solid ${border}`, backdropFilter: 'blur(20px)' }}>
         {NAV.map(({ path, label, icon }) => {
           const active = isActive(path);
           return (
             <Link key={path} to={path}
-              className="flex-1 flex flex-col items-center pt-2.5 pb-3 gap-1 transition-colors"
+              className="flex-1 flex flex-col items-center pt-2.5 pb-3 gap-1 transition-colors min-h-[56px]"
               style={{ color: active ? activeText : mutedText }}>
               {icon}
               <span className="text-[10px] font-semibold">{label}</span>

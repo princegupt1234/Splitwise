@@ -75,22 +75,21 @@ const Reports = () => {
   return (
     <Layout>
       <div className="py-5 space-y-5">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports</h1>
+        <h1 className="text-2xl font-bold text-white">Reports</h1>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
         {/* Group tabs */}
         {groups.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {groups.map((g) => (
               <button
                 key={g._id}
                 onClick={() => { setActiveGroup(g); localStorage.setItem('activeGroupId', g._id); fetchReport(g._id, month, year); }}
-                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  activeGroup?._id === g._id
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
+                className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-all"
+                style={activeGroup?._id === g._id
+                  ? { background: 'rgba(101,116,243,0.2)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.35)' }
+                  : { background: 'rgba(255,255,255,0.04)', color: '#5a5d70', border: '1px solid rgba(255,255,255,0.07)' }}
               >
                 {g.name}
               </button>
@@ -130,26 +129,31 @@ const Reports = () => {
           <>
             {/* Summary */}
             <div className="card p-5">
-              <h2 className="font-semibold text-gray-900 dark:text-white mb-1">{MONTHS[month - 1]} {year}</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{report?.totalExpenses} expenses · {report?.groupName}</p>
+              <h2 className="font-semibold text-white mb-1">{MONTHS[month - 1]} {year}</h2>
+              <p className="text-sm mb-4" style={{ color: '#4a4d5e' }}>{report?.totalExpenses} expenses · {report?.groupName}</p>
               <div className="flex items-end gap-2">
-                <p className="text-4xl font-bold text-gray-900 dark:text-white">{formatCurrency(report?.totalExpense)}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">total</p>
+                <p className="text-3xl sm:text-4xl font-bold text-white">{formatCurrency(report?.totalExpense)}</p>
+                <p className="text-sm mb-1" style={{ color: '#4a4d5e' }}>total</p>
               </div>
             </div>
 
             {/* Category chart */}
             {pieData.length > 0 && (
               <div className="card p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Spending by Category</h3>
+                <h3 className="font-semibold text-white mb-4">Spending by Category</h3>
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={11}>
+                    <Pie data={pieData} cx="50%" cy="50%" outerRadius={75} dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false} fontSize={10}>
                       {pieData.map((_, index) => (
                         <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(val) => formatCurrency(val)} />
+                    <Tooltip
+                      formatter={(val) => formatCurrency(val)}
+                      contentStyle={{ background: '#1a1d27', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, color: '#e8eaf0' }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -157,24 +161,24 @@ const Reports = () => {
 
             {/* Category breakdown */}
             <div className="card p-5">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Category Breakdown</h3>
+              <h3 className="font-semibold text-white mb-4">Category Breakdown</h3>
               <div className="space-y-3">
                 {Object.entries(report?.categoryWise || {})
                   .sort((a, b) => b[1] - a[1])
                   .map(([cat, amount]) => (
                     <div key={cat} className="flex items-center gap-3">
-                      <span className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${CATEGORY_COLORS[cat]}`}>
+                      <span className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${CATEGORY_COLORS[cat]}`}>
                         {CATEGORY_ICONS[cat]}
                       </span>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{cat}</span>
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(amount)}</span>
+                          <span className="text-sm font-medium text-white truncate">{cat}</span>
+                          <span className="text-sm font-bold text-white ml-2 flex-shrink-0">{formatCurrency(amount)}</span>
                         </div>
-                        <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
                           <div
-                            className="h-full bg-primary-500 rounded-full"
-                            style={{ width: `${(amount / report.totalExpense) * 100}%` }}
+                            className="h-full rounded-full"
+                            style={{ width: `${(amount / report.totalExpense) * 100}%`, background: 'linear-gradient(90deg,#4f56e8,#6574f3)' }}
                           />
                         </div>
                       </div>
@@ -186,13 +190,16 @@ const Reports = () => {
             {/* Member chart */}
             {barData.length > 0 && (
               <div className="card p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Member Comparison</h3>
+                <h3 className="font-semibold text-white mb-4">Member Comparison</h3>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={barData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(val) => formatCurrency(val)} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#4a4d5e' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#4a4d5e' }} />
+                    <Tooltip
+                      formatter={(val) => formatCurrency(val)}
+                      contentStyle={{ background: '#1a1d27', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, color: '#e8eaf0' }}
+                    />
                     <Bar dataKey="Paid" fill="#22c55e" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="Share" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -202,23 +209,23 @@ const Reports = () => {
 
             {/* Member summary */}
             <div className="card p-5">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Member Summary</h3>
+              <h3 className="font-semibold text-white mb-4">Member Summary</h3>
               <div className="space-y-4">
                 {report?.memberWise?.map((m) => (
                   <div key={m.memberId} className="flex items-start gap-3">
                     <Avatar name={m.name} size="md" />
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900 dark:text-white text-sm">{m.name}</p>
-                      <div className="flex gap-4 mt-1">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          Paid: <span className="font-semibold text-gray-700 dark:text-gray-300">{formatCurrency(m.totalPaid)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white text-sm">{m.name}</p>
+                      <div className="flex gap-4 mt-1 flex-wrap">
+                        <span className="text-xs" style={{ color: '#4a4d5e' }}>
+                          Paid: <span className="font-semibold" style={{ color: '#e8eaf0' }}>{formatCurrency(m.totalPaid)}</span>
                         </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          Share: <span className="font-semibold text-gray-700 dark:text-gray-300">{formatCurrency(m.totalShare)}</span>
+                        <span className="text-xs" style={{ color: '#4a4d5e' }}>
+                          Share: <span className="font-semibold" style={{ color: '#e8eaf0' }}>{formatCurrency(m.totalShare)}</span>
                         </span>
                       </div>
                     </div>
-                    <span className={`text-sm font-bold ${m.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    <span className="text-sm font-bold flex-shrink-0" style={{ color: m.balance >= 0 ? '#10b981' : '#ef4444' }}>
                       {m.balance >= 0 ? '+' : ''}{formatCurrency(m.balance)}
                     </span>
                   </div>

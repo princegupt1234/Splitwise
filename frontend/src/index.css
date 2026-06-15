@@ -106,6 +106,20 @@
   }
 }
 
+/* ── Mobile touch targets ───────────────────────── */
+@media (max-width: 767px) {
+  .btn-primary, .btn-secondary, .btn-danger {
+    min-height: 44px;
+  }
+  .input-field {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  select.input-field {
+    font-size: 16px;
+  }
+}
+
 /* ── Scrollbar ──────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
