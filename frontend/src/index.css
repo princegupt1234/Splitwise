@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { @apply box-border; }
+  html { scroll-behavior: smooth; }
+
+  :root {
+    --bg-base:    #090b10;
+    --bg-surface: #0f1117;
+    --text-base:  #e8eaf0;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    background-color: var(--bg-base);
+    color: var(--text-base);
+    font-feature-settings: 'cv02','cv03','cv04','cv11';
+  }
+}
+
+@layer components {
+  /* ── Buttons ─────────────────────────────────── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 font-semibold text-sm
+           py-2.5 px-5 rounded-2xl transition-all duration-200
+           active:scale-[0.96] disabled:opacity-40 disabled:cursor-not-allowed select-none;
+    background: linear-gradient(135deg, #4f56e8, #6574f3);
+    color: #fff;
+    box-shadow: 0 0 0 1px rgba(101,116,243,0.4), 0 4px 12px rgba(79,86,232,0.35);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #4144d0, #4f56e8);
+    box-shadow: 0 0 0 1px rgba(101,116,243,0.5), 0 6px 20px rgba(79,86,232,0.45);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 font-semibold text-sm
+           py-2.5 px-5 rounded-2xl transition-all duration-200
+           active:scale-[0.96] select-none;
+    background: rgba(255,255,255,0.05);
+    color: #c8cad4;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .btn-secondary:hover {
+    background: rgba(255,255,255,0.09);
+    color: #fff;
+    border-color: rgba(255,255,255,0.14);
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 font-semibold text-sm
+           py-2.5 px-5 rounded-2xl transition-all duration-200
+           active:scale-[0.96] select-none;
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+  }
+
+  /* ── Card ────────────────────────────────────── */
+  .card {
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    backdrop-filter: blur(12px);
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200 cursor-pointer;
+  }
+  .card-hover:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.12);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .card-hover:active { transform: scale(0.98); }
+
+  /* ── Input ───────────────────────────────────── */
+  .input-field {
+    @apply w-full rounded-2xl px-4 py-3 text-sm transition-all duration-150;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #e8eaf0;
+    outline: none;
+  }
+  .input-field::placeholder { color: #4a4d5e; }
+  .input-field:focus {
+    border-color: rgba(101,116,243,0.6);
+    background: rgba(255,255,255,0.06);
+    box-shadow: 0 0 0 3px rgba(101,116,243,0.12);
+  }
+
+  /* ── Label ───────────────────────────────────── */
+  .label {
+    @apply block text-xs font-semibold uppercase tracking-widest mb-2;
+    color: #5a5d70;
+  }
+
+  /* ── Section heading ─────────────────────────── */
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-widest;
+    color: #3a3d50;
+  }
+}
+
+/* ── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ── Animations ──────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: 12px;
+}
+
+/* ── Select option dark fix ──────────────────────── */
+select option { background: #1a1d27; color: #e8eaf0; }
