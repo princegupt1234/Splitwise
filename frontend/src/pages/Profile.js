@@ -190,7 +190,7 @@ const Profile = () => {
 
         {/* ── Profile Card ────────────────────────────── */}
         <Card className="p-5">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <Avatar name={user?.name} size="xl" />
             <div className="flex-1 min-w-0">
               <p className="font-bold text-lg leading-tight truncate" style={{ color: 'var(--text-base)' }}>
@@ -230,12 +230,12 @@ const Profile = () => {
         {stats && (
           <div>
             <SectionLabel>Your Statistics</SectionLabel>
-            <div className="grid grid-cols-3 gap-2 mb-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
               <StatPill label="Groups"     value={stats.groups}                  color="#8196f8" />
               <StatPill label="You Paid"   value={formatCurrency(stats.myPaid)}  color="#10b981" />
               <StatPill label="Your Share" value={formatCurrency(stats.myShare)} color="#f59e0b" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <StatPill label="Pending Settlements" value={settleStats.pending} color="#f59e0b" />
               <StatPill label="Completed"           value={settleStats.settled} color="#10b981" />
             </div>

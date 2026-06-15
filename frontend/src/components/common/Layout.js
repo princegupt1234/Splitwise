@@ -61,7 +61,7 @@ const CloseIcon = () => (
 
 const Layout = ({ children }) => {
   const { user } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+  const { toggleTheme, isDark } = useTheme();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -77,17 +77,17 @@ const Layout = ({ children }) => {
   const isActive = (p) => location.pathname.startsWith(p);
 
   const bg         = 'var(--bg-base)';
-  const surface    = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)';
-  const border     = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
-  const navBg      = isDark ? 'rgba(9,11,16,0.85)'    : 'rgba(242,243,247,0.9)';
-  const activeText = '#6574f3';
-  const mutedText  = isDark ? '#4a4d5e' : '#9197a3';
-  const labelText  = isDark ? '#e8eaf0'  : '#111318';
+  const surface    = 'var(--bg-surface)';
+  const border     = 'var(--surface-border)';
+  const navBg      = 'var(--nav-bg)';
+  const activeText = 'var(--accent)';
+  const mutedText  = 'var(--text-muted)';
+  const labelText  = 'var(--text-base)';
 
   const SidebarContent = ({ compact }) => (
     <>
       <Link to="/dashboard" className={`flex items-center gap-3 mb-8 ${compact ? 'justify-center px-0' : 'px-3'}`}>
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: 'linear-gradient(135deg, #4f56e8, #6574f3)', boxShadow: '0 4px 12px rgba(101,116,243,0.4)' }}>
           <span className="text-white font-bold text-sm">F</span>
         </div>
@@ -133,7 +133,7 @@ const Layout = ({ children }) => {
 
         {!compact && (
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-2xl"
-            style={{ background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)', border: `1px solid ${border}` }}>
+            style={{ background: 'var(--surface-overlay)', border: `1px solid ${border}` }}>
             <Avatar name={user?.name} size="sm" />
             <div className="min-w-0">
               <p className="text-xs font-semibold truncate" style={{ color: labelText }}>{user?.name}</p>
@@ -174,7 +174,7 @@ const Layout = ({ children }) => {
       <aside
         className="fixed left-0 top-0 bottom-0 w-64 z-50 py-6 px-3 flex flex-col md:hidden transition-transform duration-300"
         style={{
-          background: isDark ? '#0f1117' : '#f2f3f7',
+          background: surface,
           borderRight: `1px solid ${border}`,
           transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
         }}
@@ -182,7 +182,7 @@ const Layout = ({ children }) => {
         <button
           onClick={() => setDrawerOpen(false)}
           className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(255,255,255,0.08)', color: mutedText }}
+          style={{ background: 'var(--surface-overlay)', color: mutedText }}
         >
           <CloseIcon />
         </button>
@@ -190,12 +190,12 @@ const Layout = ({ children }) => {
       </aside>
 
       {/* ── Mobile Top Bar ── */}
-      <header className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 h-14"
-        style={{ background: navBg, borderBottom: `1px solid ${border}`, backdropFilter: 'blur(20px)' }}>
+        <header className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 h-14"
+          style={{ background: navBg, borderBottom: `1px solid ${border}`, backdropFilter: 'blur(20px)' }}>
         <button
           onClick={() => setDrawerOpen(true)}
           className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ background: 'rgba(255,255,255,0.06)', color: mutedText }}
+          style={{ background: 'var(--surface-overlay)', color: mutedText }}
         >
           <HamburgerIcon />
         </button>

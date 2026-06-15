@@ -5,20 +5,20 @@ import { Spinner, Avatar } from './index';
 
 /* ── Helpers ──────────────────────────────────────────────── */
 const c = {
-  bg:       '#0f1117',
-  surface:  '#141720',
-  surface2: '#1a1d27',
-  border:   'rgba(255,255,255,0.07)',
+  bg:       'var(--panel-bg)',
+  surface:  'var(--bg-surface)',
+  surface2: 'rgba(255,255,255,0.03)',
+  border:   'var(--panel-border)',
   border2:  'rgba(255,255,255,0.05)',
-  text:     '#e8eaf0',
-  muted:    '#4a4d5e',
-  accent:   '#6574f3',
+  text:     'var(--text-base)',
+  muted:    'var(--text-muted)',
+  accent:   'var(--accent)',
   accentBg: 'rgba(101,116,243,0.12)',
-  green:    '#10b981',
+  green:    'var(--success)',
   greenBg:  'rgba(16,185,129,0.12)',
-  red:      '#ef4444',
+  red:      'var(--danger)',
   redBg:    'rgba(239,68,68,0.12)',
-  amber:    '#f59e0b',
+  amber:    'var(--warning)',
   amberBg:  'rgba(245,158,11,0.12)',
 };
 
@@ -150,7 +150,7 @@ const SettlementDetailsModal = ({ isOpen, onClose, groupId, currentUserId, onSet
         </div>
 
         {/* ── Summary stats ── */}
-        <div className="px-6 py-4 flex gap-3 flex-shrink-0"
+        <div className="px-6 py-4 grid grid-cols-1 sm:grid-cols-4 gap-3 flex-shrink-0"
           style={{ borderBottom: `1px solid ${c.border}` }}>
           <StatPill label="Total Settled"    value={formatCurrency(totalSettledAmt)} color={c.green} />
           <StatPill label="Total Pending"    value={formatCurrency(totalPendingAmt)} color={c.amber} />
@@ -213,7 +213,7 @@ const SettlementDetailsModal = ({ isOpen, onClose, groupId, currentUserId, onSet
 
                 return (
                   <div key={s._id}
-                    className="flex items-center gap-4 p-4 rounded-2xl transition-all"
+                    className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-2xl transition-all"
                     style={{ background: c.surface2, border: `1px solid ${c.border2}` }}
                     onMouseEnter={e => e.currentTarget.style.borderColor = c.border}
                     onMouseLeave={e => e.currentTarget.style.borderColor = c.border2}

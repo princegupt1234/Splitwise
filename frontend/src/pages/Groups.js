@@ -33,14 +33,14 @@ export const CreateGroup = () => {
     <Layout>
       <div className="py-5">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl">←</button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Group</h1>
+          <button onClick={() => navigate(-1)} className="text-2xl font-bold" style={{ color: 'var(--text-muted)' }}>←</button>
+          <h1 className="text-2xl font-bold text-theme-primary">Create Group</h1>
         </div>
 
         <div className="card p-6">
           <div className="text-center mb-6">
             <div className="text-5xl mb-2">🏘️</div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Create a flat group and share the code with your flatmates</p>          </div>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Create a flat group and share the code with your flatmates</p>          </div>
 
           {error && <div className="mb-4"><Alert type="error" message={error} onClose={() => setError('')} /></div>}
 
@@ -63,8 +63,8 @@ export const CreateGroup = () => {
           </form>
 
           <div className="mt-4 text-center">
-            <span className="text-gray-500 text-sm">Already have a code? </span>
-            <Link to="/groups/join" className="text-primary-600 dark:text-primary-400 text-sm font-medium hover:underline">Join a group</Link>
+            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Already have a code? </span>
+            <Link to="/groups/join" className="text-sm font-semibold" style={{ color: '#8196f8' }}>Join a group</Link>
           </div>
         </div>
       </div>
@@ -102,14 +102,14 @@ export const JoinGroup = () => {
     <Layout>
       <div className="py-5">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl">←</button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Join Group</h1>
+          <button onClick={() => navigate(-1)} className="text-2xl font-bold" style={{ color: 'var(--text-muted)' }}>←</button>
+          <h1 className="text-2xl font-bold text-theme-primary">Join Group</h1>
         </div>
 
         <div className="card p-6">
           <div className="text-center mb-6">
             <div className="text-5xl mb-2">🔑</div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Enter the 8-character code shared by your flatmate</p>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Enter the 8-character code shared by your flatmate</p>
           </div>
 
           {error && <div className="mb-4"><Alert type="error" message={error} onClose={() => setError('')} /></div>}
@@ -207,17 +207,17 @@ export const GroupDetail = () => {
   return (
     <Layout>
       <div className="py-5 space-y-5">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl">←</button>
-          <h1 className="text-2xl font-bold text-white">{group?.name}</h1>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <button onClick={() => navigate(-1)} className="text-2xl font-bold" style={{ color: '#4a4d5e' }}>←</button>
+          <h1 className="text-2xl font-bold text-theme-primary break-words">{group?.name}</h1>
         </div>
 
         {/* Group code card */}
         <div className="card p-5">
-          <p className="text-sm mb-2" style={{ color: '#4a4d5e' }}>Share this code with your flatmates</p>
-          <div className="flex items-center justify-between rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.04)' }}>
-            <span className="text-2xl sm:text-3xl font-mono font-bold tracking-widest" style={{ color: '#8196f8' }}>{group?.code}</span>
-            <button onClick={handleCopyCode} className="btn-secondary text-sm px-4 py-2">
+          <p className="text-sm mb-2" style={{ color: 'var(--text-muted)' }}>Share this code with your flatmates</p>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-xl p-4 gap-3" style={{ background: 'var(--surface-overlay)' }}>
+            <span className="text-2xl sm:text-3xl font-mono font-bold tracking-widest break-all" style={{ color: 'var(--accent)' }}>{group?.code}</span>
+            <button onClick={handleCopyCode} className="btn-secondary text-sm px-4 py-2 w-full sm:w-auto">
               {copied ? '✓ Copied' : 'Copy'}
             </button>
           </div>
@@ -225,50 +225,52 @@ export const GroupDetail = () => {
 
         {/* Members */}
         <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-white">Members ({group?.members?.length})</h2>
-            <button onClick={() => setInviteModal(true)}
-              className="text-sm font-semibold px-3 py-1.5 rounded-lg"
-              style={{ background: 'rgba(101,116,243,0.1)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.18)' }}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+            <h2 className="font-semibold text-theme-primary">Members ({group?.members?.length})</h2>
+              <button onClick={() => setInviteModal(true)}
+                className="text-sm font-semibold px-3 py-1.5 rounded-lg"
+                style={{ background: 'rgba(101,116,243,0.1)', color: 'var(--accent)', border: '1px solid rgba(101,116,243,0.18)' }}
             >
               + Invite
             </button>
           </div>
           <div className="space-y-3">
             {group?.members?.map((member) => (
-              <div key={member._id} className="flex items-center gap-3">
+              <div key={member._id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <Avatar name={member.name} size="md" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-white text-sm truncate">{member.name}</p>
-                  <p className="text-xs" style={{ color: '#4a4d5e' }}>@{member.username}</p>
+                  <p className="font-medium text-theme-primary text-sm truncate">{member.name}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>@{member.username}</p>
                 </div>
-                {group.createdBy._id === member._id && (
-                  <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
-                    style={{ background: 'rgba(101,116,243,0.15)', color: '#8196f8' }}>Admin</span>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  {group.createdBy._id === member._id && (
+                    <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
+                      style={{ background: 'rgba(101,116,243,0.15)', color: 'var(--accent)' }}>Admin</span>
+                  )}
                 {member._id === user._id && (
                   <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
-                    style={{ background: 'rgba(255,255,255,0.06)', color: '#4a4d5e' }}>You</span>
+                    style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' }}>You</span>
                 )}
                 {isAdmin && member._id !== user._id && member._id !== group.createdBy._id && (
                   <button
                     onClick={() => handleRemoveMember(member._id, member.name)}
                     disabled={removingId === member._id}
                     className="text-xs font-semibold px-2.5 py-1 rounded-full transition-all disabled:opacity-50 flex-shrink-0"
-                    style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}
+                    style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.2)' }}
                   >
                     {removingId === member._id ? '…' : 'Remove'}
                   </button>
                 )}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Quick links */}
-        <div className="grid grid-cols-2 gap-3">
-          <Link to="/expenses/add" className="btn-primary text-center text-sm py-3">Add Expense</Link>
-          <Link to="/settlements" className="btn-secondary text-center text-sm py-3">Settlements</Link>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Link to="/expenses/add" className="btn-primary text-center text-sm py-3">Add Expense</Link>
+              <Link to="/settlements" className="btn-secondary text-center text-sm py-3">Settlements</Link>
         </div>
       </div>
 

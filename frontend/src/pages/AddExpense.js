@@ -113,15 +113,15 @@ const AddExpense = () => {
     <Layout>
       <div className="py-5">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl">←</button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Add Expense</h1>
+          <button onClick={() => navigate(-1)} className="text-2xl font-bold transition-colors" style={{ color: 'var(--text-muted)' }}>←</button>
+          <h1 className="text-2xl font-bold text-theme-primary">Add Expense</h1>
         </div>
 
         {error && <div className="mb-4"><Alert type="error" message={error} onClose={() => setError('')} /></div>}
 
         {groups.length === 0 ? (
           <div className="card p-6 text-center">
-            <p className="text-gray-500 dark:text-gray-400">No groups found. Create or join a group first.</p>
+            <p style={{ color: 'var(--text-muted)' }}>No groups found. Create or join a group first.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -159,7 +159,7 @@ const AddExpense = () => {
                 />
               </div>
               {splitPerPerson > 0 && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>
                   ₹{splitPerPerson} per person ({form.splitAmong.length} people)
                 </p>
               )}
@@ -187,14 +187,19 @@ const AddExpense = () => {
                     key={cat}
                     type="button"
                     onClick={() => setForm({ ...form, category: cat })}
-                    className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
-                      form.category === cat
-                        ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20 dark:border-primary-500'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                    }`}
+                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all"
+                    style={form.category === cat ? {
+                      background: 'rgba(101,116,243,0.15)',
+                      border: '2px solid rgba(101,116,243,0.5)',
+                      color: 'var(--accent)',
+                    } : {
+                      background: 'var(--surface-overlay)',
+                      border: '2px solid var(--surface-border)',
+                      color: 'var(--text-base)',
+                    }}
                   >
                     <span className="text-xl">{CATEGORY_ICONS[cat]}</span>
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{cat}</span>
+                    <span className="text-xs font-medium">{cat}</span>
                   </button>
                 ))}
               </div>
@@ -205,32 +210,24 @@ const AddExpense = () => {
               <label className="label">Paid by</label>
               <div className="input-field flex items-center gap-3 cursor-not-allowed opacity-80">
                 <Avatar name={user?.name} size="sm" />
-                <span className="text-gray-900 dark:text-white font-medium">
-                  {user?.name} <span className="text-gray-400 dark:text-gray-500 font-normal">(You)</span>
+                  <span className="font-medium text-theme-primary">
+                    {user?.name} <span className="font-normal" style={{ color: 'var(--text-muted)' }}>(You)</span>
                 </span>
               </div>
             </div>
 
             {/* Split among */}
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-3">
                 <label className="label mb-0">Split between</label>
                 <div className="flex gap-2 text-xs">
-                  <button
-                    type="button"
+                  <button type="button"
                     onClick={() => setForm({ ...form, splitAmong: members.map((m) => m._id) })}
-                    className="text-primary-600 dark:text-primary-400 hover:underline"
-                  >
-                    All
-                  </button>
-                  <span className="text-gray-300">|</span>
-                  <button
-                    type="button"
+                    style={{ color: 'var(--accent)' }}>All</button>
+                  <span style={{ color: 'var(--text-subtle)' }}>|</span>
+                  <button type="button"
                     onClick={() => setForm({ ...form, splitAmong: [] })}
-                    className="text-gray-500 hover:underline"
-                  >
-                    None
-                  </button>
+                    style={{ color: 'var(--text-muted)' }}>None</button>
                 </div>
               </div>
               <div className="space-y-2">
@@ -239,19 +236,22 @@ const AddExpense = () => {
                     key={m._id}
                     type="button"
                     onClick={() => toggleSplitMember(m._id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
-                      form.splitAmong.includes(m._id)
-                        ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20 dark:border-primary-500'
-                        : 'border-gray-200 dark:border-gray-700'
-                    }`}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl transition-all"
+                    style={form.splitAmong.includes(m._id) ? {
+                      background: 'rgba(101,116,243,0.1)',
+                      border: '2px solid rgba(101,116,243,0.4)',
+                    } : {
+                      background: 'var(--surface-overlay)',
+                      border: '2px solid var(--surface-border)',
+                    }}
                   >
                     <Avatar name={m.name} size="sm" />
-                    <span className="flex-1 text-left text-sm font-medium text-gray-900 dark:text-white">
+                    <span className="flex-1 text-left text-sm font-medium text-theme-primary">
                       {m.name} {m._id === userId ? '(You)' : ''}
                     </span>
                     {form.splitAmong.includes(m._id)
-                      ? <span className="text-primary-600 dark:text-primary-400">✓</span>
-                      : <span className="text-gray-300">○</span>
+                      ? <span style={{ color: 'var(--accent)' }}>✓</span>
+                      : <span style={{ color: 'var(--text-subtle)' }}>○</span>
                     }
                   </button>
                 ))}

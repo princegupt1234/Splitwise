@@ -77,24 +77,24 @@ const ExpenseHistory = () => {
   return (
     <Layout>
       <div className="py-5 space-y-5">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Expenses</h1>
-          <Link to="/expenses/add" className="btn-primary text-sm px-4 py-2">+ Add</Link>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold text-[var(--text-base)]">Expenses</h1>
+          <Link to="/expenses/add" className="btn-primary text-sm px-4 py-2 w-full sm:w-auto text-center">+ Add</Link>
         </div>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
         {/* Group tabs */}
         {groups.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex flex-wrap gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {groups.map((g) => (
               <button
                 key={g._id}
                 onClick={() => handleGroupChange(g)}
-                className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-all"
+                className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap"
                 style={activeGroup?._id === g._id
                   ? { background: 'rgba(101,116,243,0.2)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.35)' }
-                  : { background: 'rgba(255,255,255,0.04)', color: '#5a5d70', border: '1px solid rgba(255,255,255,0.07)' }}
+                  : { background: 'var(--input-bg)', color: 'var(--text-muted)', border: '1px solid var(--input-border)' }}
               >
                 {g.name}
               </button>
@@ -103,13 +103,13 @@ const ExpenseHistory = () => {
         )}
 
         {/* Category filter */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex flex-wrap gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <button
             onClick={() => handleCategoryChange('')}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap"
             style={!filterCategory
               ? { background: 'rgba(101,116,243,0.2)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.35)' }
-              : { background: 'rgba(255,255,255,0.04)', color: '#5a5d70', border: '1px solid rgba(255,255,255,0.07)' }}
+              : { background: 'var(--input-bg)', color: 'var(--text-muted)', border: '1px solid var(--input-border)' }}
           >
             All
           </button>
@@ -117,10 +117,10 @@ const ExpenseHistory = () => {
             <button
               key={cat}
               onClick={() => handleCategoryChange(cat)}
-              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap"
               style={filterCategory === cat
                 ? { background: 'rgba(101,116,243,0.2)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.35)' }
-                : { background: 'rgba(255,255,255,0.04)', color: '#5a5d70', border: '1px solid rgba(255,255,255,0.07)' }}
+                : { background: 'var(--input-bg)', color: 'var(--text-muted)', border: '1px solid var(--input-border)' }}
             >
               {CATEGORY_ICONS[cat]} {cat}
             </button>
@@ -129,12 +129,12 @@ const ExpenseHistory = () => {
 
         {/* Total */}
         {expenses.length > 0 && (
-          <div className="card p-4 flex items-center justify-between">
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="card p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <span className="text-sm text-[var(--text-muted)]">
               {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
               {filterCategory ? ` in ${filterCategory}` : ''}
             </span>
-            <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(totalAmount)}</span>
+            <span className="font-bold text-[var(--text-base)]">{formatCurrency(totalAmount)}</span>
           </div>
         )}
 
@@ -159,25 +159,25 @@ const ExpenseHistory = () => {
           <div className="space-y-2">
             {expenses.map((expense) => (
               <div key={expense._id} className="card p-4">
-                <div className="flex items-start gap-3">
+                <div className="flex flex-col sm:flex-row items-start gap-3">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${CATEGORY_COLORS[expense.category]}`}>
                     {CATEGORY_ICONS[expense.category]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-white text-sm truncate">{expense.title}</p>
+                        <p className="font-semibold text-[var(--text-base)] text-sm truncate">{expense.title}</p>
                         <p className="text-xs mt-0.5" style={{ color: '#4a4d5e' }}>
                           Paid by {expense.paidBy?._id === user._id ? 'You' : expense.paidBy?.name}
                           {' · '}{formatDate(expense.date)}
                         </p>
-                        <p className="text-xs mt-0.5 truncate" style={{ color: '#3a3d50' }}>
+                        <p className="text-xs mt-0.5 truncate text-[var(--text-subtle)]">
                           Split: {expense.splitAmong?.map((m) => m._id === user._id ? 'You' : m.name).join(', ')}
                         </p>
                       </div>
-                      <div className="flex-shrink-0 text-right ml-2">
-                        <p className="font-bold text-white">{formatCurrency(expense.amount)}</p>
-                        <p className="text-xs" style={{ color: '#4a4d5e' }}>
+                      <div className="flex-shrink-0 text-right sm:text-right ml-0 sm:ml-2 w-full sm:w-auto">
+                        <p className="font-bold text-[var(--text-base)]">{formatCurrency(expense.amount)}</p>
+                        <p className="text-xs text-[var(--text-muted)]">
                           ₹{(expense.amount / (expense.splitAmong?.length || 1)).toFixed(0)}/ea
                         </p>
                       </div>
@@ -186,7 +186,7 @@ const ExpenseHistory = () => {
                 </div>
 
                 {expense.createdBy?._id === user._id && (
-                  <div className="flex justify-end mt-3 pt-3 gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="flex justify-end mt-3 pt-3 gap-3 border-t" style={{ borderColor: 'var(--surface-border)' }}>
                     <button
                       onClick={() => handleDelete(expense._id)}
                       className="text-xs font-semibold px-3 py-1.5 rounded-lg min-h-[32px]"

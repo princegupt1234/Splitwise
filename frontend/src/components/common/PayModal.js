@@ -59,25 +59,25 @@ const PayModal = ({ isOpen, onClose, settlement, onSuccess }) => {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => { reset(); onClose(); }} />
       <div className="relative w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
-        style={{ background: '#141720', border: '1px solid rgba(255,255,255,0.08)' }}>
+          style={{ background: 'var(--panel-bg)', border: '1px solid var(--panel-border)' }}>
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+           style={{ borderBottom: '1px solid var(--panel-border)' }}>
           <div>
-            <p className="font-semibold text-white text-base">Submit Payment</p>
-            <p className="text-xs mt-0.5" style={{ color: '#4a4d5e' }}>
+            <p className="font-semibold text-theme-primary text-base">Submit Payment</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
               To: {settlement.to?.name}
             </p>
           </div>
           <button onClick={() => { reset(); onClose(); }}
             className="w-7 h-7 rounded-full flex items-center justify-center text-xs"
-            style={{ background: 'rgba(255,255,255,0.06)', color: '#6a6d80' }}>✕</button>
+            style={{ background: 'var(--surface-overlay)', color: 'var(--text-muted)' }}>✕</button>
         </div>
 
         {/* Progress */}
         <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="flex items-center justify-between mb-2">
+           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold" style={{ color: '#4a4d5e' }}>Progress</span>
             <span className="text-xs font-bold" style={{ color: '#10b981' }}>{paidPct}% paid</span>
           </div>
@@ -87,7 +87,7 @@ const PayModal = ({ isOpen, onClose, settlement, onSuccess }) => {
           </div>
           <div className="flex justify-between mt-2">
             <span className="text-xs" style={{ color: '#4a4d5e' }}>Paid: {formatCurrency(paidAmount)}</span>
-            <span className="text-xs font-semibold" style={{ color: '#f59e0b' }}>
+              <span className="text-xs font-semibold" style={{ color: 'var(--warning)' }}>
               Remaining: {formatCurrency(remaining)}
             </span>
           </div>
@@ -102,7 +102,7 @@ const PayModal = ({ isOpen, onClose, settlement, onSuccess }) => {
             <label className="label">Payment Amount (₹)</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base font-bold"
-                style={{ color: '#4a4d5e' }}>₹</span>
+                  style={{ color: 'var(--text-muted)' }}>₹</span>
               <input
                 type="number" min="0.01" step="0.01" max={remaining}
                 className="input-field pl-8 text-lg font-bold"
@@ -117,7 +117,7 @@ const PayModal = ({ isOpen, onClose, settlement, onSuccess }) => {
                 <button key={pct} type="button"
                   onClick={() => setAmount((remaining * pct / 100).toFixed(2))}
                   className="flex-1 text-xs font-semibold py-1 rounded-lg transition-all"
-                  style={{ background: 'rgba(101,116,243,0.1)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.2)' }}
+                    style={{ background: 'rgba(101,116,243,0.1)', color: 'var(--accent)', border: '1px solid rgba(101,116,243,0.2)' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(101,116,243,0.2)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(101,116,243,0.1)'}
                 >
@@ -142,12 +142,12 @@ const PayModal = ({ isOpen, onClose, settlement, onSuccess }) => {
           <div>
             <label className="label">Receipt / Screenshot (optional)</label>
             <label className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl cursor-pointer transition-all text-sm font-medium"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.1)', color: '#4a4d5e' }}
+                style={{ background: 'var(--surface-overlay)', border: '1px dashed var(--panel-border)', color: 'var(--text-muted)' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(101,116,243,0.4)'}
               onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
             >
               {receipt ? (
-                <span style={{ color: '#10b981' }}>✓ Receipt attached</span>
+                <span style={{ color: 'var(--success)' }}>✓ Receipt attached</span>
               ) : (
                 <>
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -160,7 +160,7 @@ const PayModal = ({ isOpen, onClose, settlement, onSuccess }) => {
             </label>
             {receipt && (
               <button type="button" onClick={() => setReceipt(null)}
-                className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                className="text-xs mt-1" style={{ color: 'var(--danger)' }}>
                 Remove receipt
               </button>
             )}

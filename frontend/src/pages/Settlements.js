@@ -188,9 +188,9 @@ const Settlements = () => {
       <div className="py-5 space-y-4">
 
         {/* ── Header ── */}
-        <div className="flex items-start justify-between pt-1 gap-3">
-          <h1 className="text-xl font-bold text-white">Settlements</h1>
-          <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-1 gap-3">
+          <h1 className="text-xl font-bold text-theme-primary">Settlements</h1>
+          <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
             <button onClick={() => setDetailsOpen(true)} disabled={!activeGroup} className="btn-secondary text-xs px-3 py-2">
               Details
             </button>
@@ -259,10 +259,10 @@ const Settlements = () => {
                 <div className="flex items-start gap-3">
                   <Avatar name={req.sender?.name} size="md" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-semibold text-theme-primary">
                       {req.sender?.name} sent a payment request
                     </p>
-                    <p className="text-xl font-bold mt-0.5 tracking-tight" style={{ color: '#10b981' }}>
+                        <p className="text-xl font-bold mt-0.5 tracking-tight" style={{ color: '#10b981' }}>
                       {formatCurrency(req.amount)}
                     </p>
                     {req.note && (
@@ -336,15 +336,15 @@ const Settlements = () => {
                       <Avatar name={s.from?.name} size="md" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 text-sm flex-wrap">
-                          <span className="font-semibold text-white">
+                          <span className="font-semibold text-theme-primary">
                             {isDebtor ? 'You' : s.from?.name}
                           </span>
                           <span style={{ color: '#3a3d50' }}>→</span>
-                          <span className="font-semibold text-white">
+                          <span className="font-semibold text-theme-primary">
                             {isCreditor ? 'You' : s.to?.name}
                           </span>
                         </div>
-                        <p className="text-xl font-bold tracking-tight text-white mt-0.5">
+                        <p className="text-xl font-bold tracking-tight text-theme-primary mt-0.5">
                           {formatCurrency(s.amount)}
                         </p>
                         {isDebtor && s.status !== 'settled' && (
@@ -376,7 +376,7 @@ const Settlements = () => {
 
                     {/* Remaining */}
                     {s.status !== 'settled' && (
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                         <span className="text-xs" style={{ color: '#4a4d5e' }}>
                           Remaining: <span className="font-bold" style={{ color: '#f59e0b' }}>
                             {formatCurrency(remaining)}

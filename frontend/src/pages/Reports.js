@@ -75,7 +75,7 @@ const Reports = () => {
   return (
     <Layout>
       <div className="py-5 space-y-5">
-        <h1 className="text-2xl font-bold text-white">Reports</h1>
+        <h1 className="text-2xl font-bold text-theme-primary">Reports</h1>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
@@ -98,7 +98,7 @@ const Reports = () => {
         )}
 
         {/* Month/Year selector */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <select
             className="input-field flex-1"
             value={month}
@@ -129,10 +129,10 @@ const Reports = () => {
           <>
             {/* Summary */}
             <div className="card p-5">
-              <h2 className="font-semibold text-white mb-1">{MONTHS[month - 1]} {year}</h2>
+              <h2 className="font-semibold text-theme-primary mb-1">{MONTHS[month - 1]} {year}</h2>
               <p className="text-sm mb-4" style={{ color: '#4a4d5e' }}>{report?.totalExpenses} expenses · {report?.groupName}</p>
               <div className="flex items-end gap-2">
-                <p className="text-3xl sm:text-4xl font-bold text-white">{formatCurrency(report?.totalExpense)}</p>
+                <p className="text-3xl sm:text-4xl font-bold text-theme-primary">{formatCurrency(report?.totalExpense)}</p>
                 <p className="text-sm mb-1" style={{ color: '#4a4d5e' }}>total</p>
               </div>
             </div>
@@ -140,7 +140,7 @@ const Reports = () => {
             {/* Category chart */}
             {pieData.length > 0 && (
               <div className="card p-5">
-                <h3 className="font-semibold text-white mb-4">Spending by Category</h3>
+                <h3 className="font-semibold text-theme-primary mb-4">Spending by Category</h3>
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
                     <Pie data={pieData} cx="50%" cy="50%" outerRadius={75} dataKey="value"
@@ -161,7 +161,7 @@ const Reports = () => {
 
             {/* Category breakdown */}
             <div className="card p-5">
-              <h3 className="font-semibold text-white mb-4">Category Breakdown</h3>
+              <h3 className="font-semibold text-theme-primary mb-4">Category Breakdown</h3>
               <div className="space-y-3">
                 {Object.entries(report?.categoryWise || {})
                   .sort((a, b) => b[1] - a[1])
@@ -172,8 +172,8 @@ const Reports = () => {
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-white truncate">{cat}</span>
-                          <span className="text-sm font-bold text-white ml-2 flex-shrink-0">{formatCurrency(amount)}</span>
+                          <span className="text-sm font-medium text-theme-primary truncate">{cat}</span>
+                          <span className="text-sm font-bold text-theme-primary ml-2 flex-shrink-0">{formatCurrency(amount)}</span>
                         </div>
                         <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
                           <div
@@ -190,7 +190,7 @@ const Reports = () => {
             {/* Member chart */}
             {barData.length > 0 && (
               <div className="card p-5">
-                <h3 className="font-semibold text-white mb-4">Member Comparison</h3>
+                <h3 className="font-semibold text-theme-primary mb-4">Member Comparison</h3>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={barData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
@@ -209,13 +209,13 @@ const Reports = () => {
 
             {/* Member summary */}
             <div className="card p-5">
-              <h3 className="font-semibold text-white mb-4">Member Summary</h3>
+              <h3 className="font-semibold text-theme-primary mb-4">Member Summary</h3>
               <div className="space-y-4">
                 {report?.memberWise?.map((m) => (
                   <div key={m.memberId} className="flex items-start gap-3">
                     <Avatar name={m.name} size="md" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white text-sm">{m.name}</p>
+                      <p className="font-medium text-theme-primary text-sm">{m.name}</p>
                       <div className="flex gap-4 mt-1 flex-wrap">
                         <span className="text-xs" style={{ color: '#4a4d5e' }}>
                           Paid: <span className="font-semibold" style={{ color: '#e8eaf0' }}>{formatCurrency(m.totalPaid)}</span>
