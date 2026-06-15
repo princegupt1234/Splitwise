@@ -15,13 +15,14 @@ const SectionLabel = ({ children }) => (
 );
 
 const Card = ({ children, className = '' }) => (
-  <div className={`rounded-2xl overflow-hidden ${className}`}
-    style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.07)' }}>
+  <div className={`card overflow-hidden ${className}`}>
     {children}
   </div>
 );
 
-const Divider = () => <div style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />;
+const Divider = () => (
+  <div className="h-px" style={{ background: 'var(--panel-border)' }} />
+);
 
 /* A plain info row — no button, no arrow */
 const InfoRow = ({ icon, label, value }) => (

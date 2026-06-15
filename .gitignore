@@ -16,7 +16,10 @@ pnpm-debug.log*
 
 # Environment files
 .env
-*.env
+.env.local
+.env.*.local
+backend/.env*
+frontend/.env*
 
 # OS files
 .DS_Store
@@ -37,17 +40,14 @@ coverage/
 
 # React static assets
 frontend/node_modules/
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
 
 # Backend specific
 backend/node_modules/
-backend/.env
 
 # npm package lock
 package-lock.json
+frontend/package-lock.json
+backend/package-lock.json
 
 # Yarn
 yarn.lock
