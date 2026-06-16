@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useNavigate } from 'react-router-dom';
 import { expenseAPI, groupAPI } from '../api';
 import { Alert, Spinner, Avatar } from '../components/common';
@@ -25,11 +27,6 @@ const AddExpense = () => {
   const [loading, setLoading] = useState(false);
   const [groupsLoading, setGroupsLoading] = useState(true);
 
-  // Wait until user is available, then fetch groups
-  useEffect(() => {
-    if (user?.username) fetchGroups();
-  }, [user?.username]);
-
   const fetchGroups = async () => {
     try {
       const { data } = await groupAPI.getAll();
@@ -47,6 +44,12 @@ const AddExpense = () => {
       setGroupsLoading(false);
     }
   };
+
+  // Wait until user is available, then fetch groups
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (user?.username) fetchGroups();
+  }, [user?.username]);
 
   const applyGroup = (group) => {
     const normalizedMembers = group.members.map((m) => ({

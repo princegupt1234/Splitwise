@@ -9,7 +9,7 @@ import { formatCurrency } from '../utils/helpers';
 
 /* ── tiny shared pieces ──────────────────────────────── */
 const SectionLabel = ({ children }) => (
-  <p className="text-xs font-semibold uppercase tracking-widest mb-2 px-1" style={{ color: '#4a4d5e' }}>
+  <p className="text-xs font-semibold uppercase tracking-widest mb-2 px-1" style={{ color: 'var(--text-muted)' }}>
     {children}
   </p>
 );
@@ -59,17 +59,17 @@ const StatPill = ({ label, value, color }) => (
 );
 
 const NOTIF_KEYS = [
-  { key: 'expenseAdded',        label: 'Expense Added' },
-  { key: 'settlementRequest',   label: 'Settlement Request' },
-  { key: 'settlementApproval',  label: 'Settlement Approval' },
-  { key: 'settlementRejection', label: 'Settlement Rejection' },
-  { key: 'groupInvitation',     label: 'Group Invitation' },
+  { key: 'expenseAdded',        label: 'Expense Alerts',        desc: 'Notifies when expenses are added to your groups.' },
+  { key: 'settlementRequest',   label: 'Settlement Requests',   desc: 'When someone requests settlement with you.' },
+  { key: 'settlementApproval',  label: 'Approval Notifications', desc: 'When a settlement you requested is approved.' },
+  { key: 'settlementRejection', label: 'Rejection Notifications',desc: 'When a settlement you requested is rejected.' },
+  { key: 'groupInvitation',     label: 'Group Invitations',     desc: 'When you are invited to join a group.' },
 ];
 
 const THEME_OPTIONS = [
-  { value: 'light',  label: 'Light',  icon: '☀️' },
-  { value: 'dark',   label: 'Dark',   icon: '🌙' },
-  { value: 'system', label: 'System', icon: '💻' },
+  { value: 'light',  label: 'Light Mode',  icon: '☀️' },
+  { value: 'dark',   label: 'Dark Mode',   icon: '🌙' },
+  { value: 'system', label: 'System Default', icon: '💻' },
 ];
 
 /* ── Main ────────────────────────────────────────────── */
@@ -180,6 +180,18 @@ const Profile = () => {
     ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
     : null;
 
+  const lastLogin = user?.lastLogin
+    ? new Date(user.lastLogin).toLocaleString()
+    : null;
+
+  const totalGroups = stats?.groups || 0;
+
+  const profileCompletion = (() => {
+    let score = 0; const fields = ['name', 'username', 'email'];
+    fields.forEach(f => { if (user?.[f]) score += 1; });
+    return Math.round((score / fields.length) * 100);
+  })();
+
   const uid = user?._id?.toString();
 
   return (
@@ -191,21 +203,68 @@ const Profile = () => {
 
         {/* ── Profile Card ────────────────────────────── */}
         <Card className="p-5">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <Avatar name={user?.name} size="xl" />
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-lg leading-tight truncate" style={{ color: 'var(--text-base)' }}>
-                {user?.name}
-              </p>
-              <p className="text-sm mt-0.5" style={{ color: '#4a4d5e' }}>@{user?.username}</p>
-              {user?.email && <p className="text-xs mt-0.5" style={{ color: '#3a3d50' }}>{user.email}</p>}
-              {memberSince  && <p className="text-xs mt-0.5" style={{ color: '#3a3d50' }}>Member since {memberSince}</p>}
-              <button onClick={() => { setEditName(true); setShowPwd(false); }}
-                className="mt-2 text-xs font-semibold px-3 py-1 rounded-lg"
-                style={{ background: 'rgba(101,116,243,0.1)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.18)' }}>
-                Edit Name
-              </button>
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <Avatar name={user?.name} size="xl" />
+              <div className="min-w-0">
+                <p className="font-bold text-xl leading-tight truncate" style={{ color: 'var(--text-base)' }}>{user?.name}</p>
+                <p className="text-sm mt-0.5" style={{ color: '#4a4d5e' }}>@{user?.username}</p>
+                <p className="text-sm mt-1 flex items-center gap-2" style={{ color: '#3a3d50' }}>
+                  {user?.email ? (
+                    <a href={`mailto:${user.email}`} className="text-sm" style={{ color: '#3a3d50' }}>{user.email}</a>
+                  ) : (
+                    <span style={{ color: '#f59e0b' }}>No email on record</span>
+                  )}
+                </p>
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  <span className="text-[12px] font-semibold px-2 py-1 rounded-full" style={{ background: 'rgba(34,197,94,0.08)', color: '#10b981', border: '1px solid rgba(16,185,129,0.12)' }}>
+                    {user?.isActive === false ? '🔴 Inactive' : '🟢 Active'}
+                  </span>
+                  <span className="text-[12px] font-semibold px-2 py-1 rounded-full" style={{ background: 'rgba(129,150,248,0.08)', color: '#6574f3', border: '1px solid rgba(101,116,243,0.12)' }}>
+                    {user?.role === 'admin' || user?.isAdmin ? '👑 Admin' : '👥 Member'}
+                  </span>
+                  {(user?.emailVerified || user?.verified) ? (
+                    <span className="text-[12px] font-semibold px-2 py-1 rounded-full" style={{ background: 'rgba(16,185,129,0.08)', color: '#10b981', border: '1px solid rgba(16,185,129,0.12)' }}>✅ Verified Email</span>
+                  ) : user?.email ? (
+                    <span className="text-[12px] font-semibold px-2 py-1 rounded-full" style={{ background: 'rgba(249,115,22,0.06)', color: '#f59e0b', border: '1px solid rgba(249,115,22,0.12)' }}>⚠️ Unverified</span>
+                  ) : null}
+                </div>
+              </div>
             </div>
+
+            <div className="flex-1 md:flex-none md:ml-auto w-full md:w-64 mt-4 md:mt-0">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted">Member since</p>
+                  <p className="font-semibold" style={{ color: 'var(--text-base)' }}>{memberSince || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted">Last login</p>
+                  <p className="font-semibold" style={{ color: 'var(--text-base)' }}>{lastLogin || '—'}</p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-xs text-muted">Profile</p>
+                  <p className="font-semibold" style={{ color: 'var(--text-base)' }}>{profileCompletion}% complete</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted">Groups</p>
+                  <p className="font-semibold" style={{ color: 'var(--text-base)' }}>{totalGroups}</p>
+                </div>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <button onClick={() => { setEditName(true); setShowPwd(false); }}
+                  className="flex-1 text-sm font-semibold px-3 py-2 rounded-lg" style={{ background: 'rgba(101,116,243,0.1)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.18)' }}>
+                  Edit Profile
+                </button>
+                <button onClick={() => { setShowPwd((p) => !p); setEditName(false); setError(''); }}
+                  className="text-sm font-semibold px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', color: '#4a4d5e', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  Change Password
+                </button>
+              </div>
+            </div>
+
           </div>
 
           {/* Inline edit name */}
@@ -227,44 +286,55 @@ const Profile = () => {
           )}
         </Card>
 
-        {/* ── Stats ───────────────────────────────────── */}
-        {stats && (
-          <div>
-            <SectionLabel>Your Statistics</SectionLabel>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
-              <StatPill label="Groups"     value={stats.groups}                  color="#8196f8" />
-              <StatPill label="You Paid"   value={formatCurrency(stats.myPaid)}  color="#10b981" />
-              <StatPill label="Your Share" value={formatCurrency(stats.myShare)} color="#f59e0b" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <StatPill label="Pending Settlements" value={settleStats.pending} color="#f59e0b" />
-              <StatPill label="Completed"           value={settleStats.settled} color="#10b981" />
-            </div>
-          </div>
-        )}
+       {/* ── Overview ─────────────────────────────────── */}
+{stats && (
+  <section className="bg-white dark:bg-gray-900 shadow-lg rounded-lg p-6">
+    <SectionLabel>Overview</SectionLabel>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-2">
+      <StatPill label="Active Groups" value={stats.groups} color="#8196f8" />
+      <StatPill label="Total Paid" value={formatCurrency(stats.myPaid)} color="#10b981" />
+      <StatPill label="Total Share" value={formatCurrency(stats.myShare)} color="#f59e0b" />
+      <StatPill label="Pending Settlements" value={settleStats.pending} color="#f59e0b" />
+      <StatPill label="Settlements Completed" value={settleStats.settled} color="#10b981" />
+    </div>
+  </section>
+)}
 
-        {/* ── Settlement Summary ───────────────────────── */}
+
+        {/* ── Financial Summary ───────────────────────── */}
         <div>
-          <SectionLabel>Settlement Summary</SectionLabel>
+          <SectionLabel>Financial Summary</SectionLabel>
           <Card>
-            <div className="grid grid-cols-2 gap-px" style={{ background: 'rgba(255,255,255,0.06)' }}>
-              {[
-                { label: 'Pending Amount',  value: formatCurrency(settleStats.pendingAmt), color: '#f59e0b' },
-                { label: 'Settled Amount',  value: formatCurrency(settleStats.settledAmt), color: '#10b981' },
-              ].map(({ label, value, color }) => (
-                <div key={label} className="px-4 py-4" style={{ background: 'rgba(255,255,255,0.035)' }}>
-                  <p className="text-xs" style={{ color: '#4a4d5e' }}>{label}</p>
-                  <p className="text-base font-bold mt-1" style={{ color }}>{value}</p>
-                </div>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 p-3">
+              <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <p className="text-xs" style={{ color: '#4a4d5e' }}>Outstanding Balance</p>
+                <p className="text-lg font-bold mt-1" style={{ color: '#ef4444' }}>{formatCurrency(settleStats.pendingAmt)}</p>
+              </div>
+              <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <p className="text-xs" style={{ color: '#4a4d5e' }}>Total Settled</p>
+                <p className="text-lg font-bold mt-1" style={{ color: '#10b981' }}>{formatCurrency(settleStats.settledAmt)}</p>
+              </div>
+              <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <p className="text-xs" style={{ color: '#4a4d5e' }}>Settlement Success Rate</p>
+                <p className="text-lg font-bold mt-1" style={{ color: '#6574f3' }}>
+                  {(() => {
+                    const total = (settleStats.settled || 0) + (settleStats.pending || 0);
+                    return total === 0 ? '—' : `${Math.round((settleStats.settled / total) * 100)}%`;
+                  })()}
+                </p>
+              </div>
+              <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <p className="text-xs" style={{ color: '#4a4d5e' }}>Pending Amount</p>
+                <p className="text-lg font-bold mt-1" style={{ color: '#f59e0b' }}>{formatCurrency(settleStats.pendingAmt)}</p>
+              </div>
             </div>
           </Card>
         </div>
 
-        {/* ── My Groups ────────────────────────────────── */}
+        {/* ── Groups ───────────────────────────────────── */}
         <div>
           <div className="flex items-center justify-between mb-2 px-1">
-            <SectionLabel>My Groups</SectionLabel>
+            <SectionLabel>Groups</SectionLabel>
             <div className="flex gap-2">
               <Link to="/groups/create" className="text-xs font-semibold px-3 py-1 rounded-lg"
                 style={{ background: 'rgba(101,116,243,0.1)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.18)' }}>
@@ -279,70 +349,90 @@ const Profile = () => {
           <Card>
             {groups.length === 0 ? (
               <p className="px-4 py-5 text-sm text-center" style={{ color: '#4a4d5e' }}>No groups yet.</p>
-            ) : groups.map((g, i) => {
-              const isAdmin = g.createdBy?._id?.toString() === uid || g.createdBy?.toString() === uid;
-              return (
-                <React.Fragment key={g._id}>
-                  {i > 0 && <Divider />}
-                  <div className="flex items-center gap-3 px-4 py-3">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
-                      style={{ background: 'rgba(101,116,243,0.1)' }}>🏘️</div>
-                    <Link to={`/groups/${g._id}`} className="flex-1 min-w-0"
-                      style={{ color: 'var(--text-base)' }}>
-                      <p className="text-sm font-medium truncate">{g.name}</p>
-                      <p className="text-xs" style={{ color: '#3a3d50' }}>
-                        {g.members?.length} members · <span className="font-mono">{g.code}</span>
-                        {isAdmin && <span className="ml-1 text-[10px] font-bold" style={{ color: '#8196f8' }}>ADMIN</span>}
-                      </p>
-                    </Link>
-                    {isAdmin && (
-                      <button
-                        onClick={() => handleDeleteGroup(g._id, g.name)}
-                        disabled={deletingGroupId === g._id}
-                        className="flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all disabled:opacity-50"
-                        style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.15)' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.18)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
-                      >
-                        {deletingGroupId === g._id ? '…' : 'Delete'}
-                      </button>
-                    )}
-                  </div>
-                </React.Fragment>
-              );
-            })}
+            ) : (
+              groups.map((g, i) => {
+                const isAdmin = g.createdBy?._id?.toString() === uid || g.createdBy?.toString() === uid;
+                const created = g.createdAt ? new Date(g.createdAt).toLocaleDateString() : '—';
+                return (
+                  <React.Fragment key={g._id}>
+                    {i > 0 && <Divider />}
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg,#f3f4ff,#eef2ff)', color: '#4f46e5' }}>{(g.name || '').charAt(0).toUpperCase()}</div>
+                      <Link to={`/groups/${g._id}`} className="flex-1 min-w-0" style={{ color: 'var(--text-base)' }}>
+                        <p className="text-sm font-medium truncate">{g.name}</p>
+                        <p className="text-xs mt-0.5" style={{ color: '#3a3d50' }}>
+                          {g.members?.length || 0} members · <span className="font-mono">{g.code}</span>
+                        </p>
+                        <p className="text-[11px] mt-0.5" style={{ color: '#6b7280' }}>
+                          Role: <span style={{ color: isAdmin ? '#6574f3' : '#3a3d50', fontWeight: 600 }}>{isAdmin ? 'Admin' : 'Member'}</span>
+                          {' · '}Created {created}
+                        </p>
+                      </Link>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteGroup(g._id, g.name)}
+                          disabled={deletingGroupId === g._id}
+                          className="flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all disabled:opacity-50"
+                          style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.15)' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.18)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+                        >
+                          {deletingGroupId === g._id ? '…' : 'Delete'}
+                        </button>
+                      )}
+                    </div>
+                  </React.Fragment>
+                );
+              })
+            )}
           </Card>
         </div>
 
-        {/* ── Account ──────────────────────────────────── */}
+        {/* ── Account Details ─────────────────────────── */}
         <div>
-          <SectionLabel>Account</SectionLabel>
+          <SectionLabel>Account Details</SectionLabel>
           <Card>
-            <InfoRow icon="👤" label="Username" value={`@${user?.username}`} />
+            <InfoRow icon="👤" label="Full Name" value={user?.name || '—'} />
             <Divider />
-            <InfoRow icon="📧" label="Email"    value={user?.email || '—'} />
+            <InfoRow icon="🔖" label="Username" value={`@${user?.username}`} />
             <Divider />
-            <ActionRow icon="🔑" label="Change Password"
-              onClick={() => { setShowPwd((p) => !p); setEditName(false); setError(''); }} />
+            <div className="flex items-center gap-3 px-4 py-3.5">
+              <span className="w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0" style={{ background: 'rgba(255,255,255,0.05)' }}>📧</span>
+              <span className="text-sm font-medium flex-1" style={{ color: 'var(--text-base)' }}>Email</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm" style={{ color: '#4a4d5e' }}>{user?.email || '—'}</span>
+                {!user?.email && <span className="text-xs font-semibold" style={{ color: '#f59e0b' }}>⚠ Email missing</span>}
+              </div>
+            </div>
+            <Divider />
+            <InfoRow icon="🔒" label="Password Status" value={user?.hasPassword ? 'Configured' : '—'} />
+            <Divider />
+            <div className="px-4 py-3.5">
+              <div className="flex gap-2">
+                <button onClick={() => { setEditName(true); setShowPwd(false); }}
+                  className="flex-1 text-sm font-semibold px-3 py-2 rounded-lg" style={{ background: 'rgba(101,116,243,0.08)', color: '#6574f3', border: '1px solid rgba(101,116,243,0.12)' }}>
+                  Edit Profile
+                </button>
+                <button onClick={() => { setShowPwd((p) => !p); setEditName(false); setError(''); }}
+                  className="flex-1 text-sm font-semibold px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', color: '#4a4d5e', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  Change Password
+                </button>
+              </div>
+            </div>
             {showPwd && (
-              <form onSubmit={handleChangePwd} className="px-4 pb-4 pt-2 space-y-3"
-                style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                <input type="password" className="input-field text-sm"
-                  placeholder="Current password" value={pwdForm.current}
+              <form onSubmit={handleChangePwd} className="px-4 pb-4 pt-2 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <input type="password" className="input-field text-sm" placeholder="Current password" value={pwdForm.current}
                   onChange={(e) => setPwdForm({ ...pwdForm, current: e.target.value })} required />
-                <input type="password" className="input-field text-sm"
-                  placeholder="New password (min 6 chars)" value={pwdForm.newPwd}
+                <input type="password" className="input-field text-sm" placeholder="New password (min 6 chars)" value={pwdForm.newPwd}
                   onChange={(e) => setPwdForm({ ...pwdForm, newPwd: e.target.value })} required />
-                <input type="password" className="input-field text-sm"
-                  placeholder="Confirm new password" value={pwdForm.confirm}
+                <input type="password" className="input-field text-sm" placeholder="Confirm new password" value={pwdForm.confirm}
                   onChange={(e) => setPwdForm({ ...pwdForm, confirm: e.target.value })} required />
                 <div className="flex gap-2">
-                  <button type="submit" disabled={loading}
-                    className="btn-primary flex-1 text-sm py-2 flex items-center justify-center gap-1.5">
+                  <button type="submit" disabled={loading} className="btn-primary flex-1 text-sm py-2 flex items-center justify-center gap-1.5">
                     {loading && <Spinner size="sm" />} Update Password
                   </button>
-                  <button type="button" className="btn-secondary flex-1 text-sm py-2"
-                    onClick={() => { setShowPwd(false); setPwdForm({ current: '', newPwd: '', confirm: '' }); }}>
+                  <button type="button" className="btn-secondary flex-1 text-sm py-2" onClick={() => { setShowPwd(false); setPwdForm({ current: '', newPwd: '', confirm: '' }); }}>
                     Cancel
                   </button>
                 </div>
@@ -351,9 +441,9 @@ const Profile = () => {
           </Card>
         </div>
 
-        {/* ── Appearance ───────────────────────────────── */}
+        {/* ── Preferences ───────────────────────────────── */}
         <div>
-          <SectionLabel>Appearance</SectionLabel>
+          <SectionLabel>Preferences</SectionLabel>
           <Card className="p-4">
             <p className="text-sm font-medium mb-3" style={{ color: 'var(--text-base)' }}>Theme</p>
             <div className="flex gap-2">
@@ -380,33 +470,39 @@ const Profile = () => {
         <div>
           <SectionLabel>Notifications</SectionLabel>
           <Card>
-            {NOTIF_KEYS.map(({ key, label }, i) => (
+            {NOTIF_KEYS.map(({ key, label, desc }, i) => (
               <React.Fragment key={key}>
                 {i > 0 && <Divider />}
-                <div className="flex items-center justify-between px-4 py-3.5">
-                  <span className="text-sm font-medium" style={{ color: 'var(--text-base)' }}>{label}</span>
-                  <button onClick={() => toggleNotif(key)}
-                    className="relative w-10 h-5 rounded-full transition-all flex-shrink-0"
-                    style={{ background: notifs[key] !== false ? '#6574f3' : 'rgba(255,255,255,0.1)' }}>
-                    <div className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
-                      style={{ transform: notifs[key] !== false ? 'translateX(22px)' : 'translateX(2px)' }} />
-                  </button>
+                <div className="px-4 py-3.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: 'var(--text-base)' }}>{label}</p>
+                      {desc && <p className="text-xs mt-1" style={{ color: '#6b7280' }}>{desc}</p>}
+                    </div>
+                    <div>
+                      <button onClick={() => toggleNotif(key)} className="relative w-10 h-5 rounded-full transition-all flex-shrink-0"
+                        style={{ background: notifs[key] !== false ? '#6574f3' : 'rgba(255,255,255,0.1)' }}>
+                        <div className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
+                          style={{ transform: notifs[key] !== false ? 'translateX(22px)' : 'translateX(2px)' }} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </React.Fragment>
             ))}
           </Card>
         </div>
 
-        {/* ── About ────────────────────────────────────── */}
+        {/* ── Application Information ───────────────────── */}
         <div>
-          <SectionLabel>About</SectionLabel>
+          <SectionLabel>Application Information</SectionLabel>
           <Card>
             <div className="flex items-center gap-3 px-4 py-4">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg,#4f56e8,#6574f3)' }}>F</div>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg,#4f56e8,#6574f3)' }}>F</div>
               <div>
                 <p className="text-sm font-semibold" style={{ color: 'var(--text-base)' }}>FlatSplit</p>
-                <p className="text-xs" style={{ color: '#3a3d50' }}>v1.0.0 · Shared expenses, simplified</p>
+                <p className="text-xs" style={{ color: '#3a3d50' }}>Version 1.0.0</p>
+                <p className="text-xs mt-1" style={{ color: '#6b7280' }}>Manage shared expenses, settlements, and flat finances in one place.</p>
               </div>
             </div>
           </Card>

@@ -110,24 +110,15 @@
   .card-hover:active { transform: scale(0.98); }
 
   .text-theme-primary {
-    color: #111827;
-  }
-  .dark .text-theme-primary {
-    color: #ffffff;
+    color: var(--text-base);
   }
 
   .text-theme-secondary {
-    color: #4b5563;
-  }
-  .dark .text-theme-secondary {
-    color: #d1d5db;
+    color: var(--text-subtle);
   }
 
   .text-theme-muted {
-    color: #6b7280;
-  }
-  .dark .text-theme-muted {
-    color: #9ca3af;
+    color: var(--text-muted);
   }
 
   .bg-theme-surface {
@@ -191,6 +182,11 @@
   select.input-field {
     font-size: 16px;
   }
+}
+
+.bg-surface {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
 }
 
 /* ── Scrollbar ──────────────────────────────────── */

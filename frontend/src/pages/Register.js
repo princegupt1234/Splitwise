@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Alert, Spinner } from '../components/common';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -13,6 +15,8 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!form.email) return setError('Email is required');
+    if (!EMAIL_RE.test(form.email)) return setError('Invalid email format');
     if (form.password.length < 6) return setError('Password must be at least 6 characters');
     setLoading(true);
     try {
@@ -51,7 +55,7 @@ const Register = () => {
               <input
                 type="text"
                 className="input-field"
-                placeholder="Prince Gupta"
+                placeholder="Full Name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value.replace(/[^a-zA-ZÀ-ɏ '.-]/g, '') })}
                 required
@@ -62,7 +66,7 @@ const Register = () => {
               <input
                 type="text"
                 className="input-field"
-                placeholder="prince_gupta"
+                placeholder="Username"
                 value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
                 required
@@ -70,14 +74,15 @@ const Register = () => {
               <p className="text-xs mt-1.5" style={{ color: '#4a4d5e' }}>Letters, numbers, underscores only</p>
             </div>
             <div>
-              <label className="label">Email <span style={{ color: '#4a4d5e' }} className="font-normal">(optional)</span></label>
+              <label className="label">Email</label>
               <input
                 type="email"
                 className="input-field"
-                placeholder="you@example.com"
+                placeholder="Email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 autoComplete="email"
+                required
               />
             </div>
             <div>

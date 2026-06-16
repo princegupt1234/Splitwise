@@ -13,7 +13,6 @@ const c = {
   text:     'var(--text-base)',
   muted:    'var(--text-muted)',
   accent:   'var(--accent)',
-  accentBg: 'rgba(101,116,243,0.12)',
   green:    'var(--success)',
   greenBg:  'rgba(16,185,129,0.12)',
   red:      'var(--danger)',
@@ -90,8 +89,8 @@ const SettlementDetailsModal = ({ isOpen, onClose, groupId, currentUserId, onSet
   const totalSettledAmt  = useMemo(() => settled.reduce((a, s) => a + s.amount, 0),  [settled]);
 
   /* ── Filtered rows ── */
-  const now = new Date();
   const filtered = useMemo(() => {
+    const now = new Date();
     let rows = settlements;
     if (filter === 'Pending')    rows = rows.filter((s) => s.status === 'pending');
     if (filter === 'Settled')    rows = rows.filter((s) => s.status === 'settled');
@@ -131,9 +130,9 @@ const SettlementDetailsModal = ({ isOpen, onClose, groupId, currentUserId, onSet
             <button
               onClick={() => exportCSV(filtered, currentUserId)}
               className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all"
-              style={{ background: c.accentBg, color: c.accent, border: `1px solid rgba(101,116,243,0.2)` }}
+              style={{ background: 'rgba(101,116,243,0.12)', color: c.accent, border: `1px solid rgba(101,116,243,0.2)` }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(101,116,243,0.2)'}
-              onMouseLeave={e => e.currentTarget.style.background = c.accentBg}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(101,116,243,0.12)'}
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
@@ -182,7 +181,7 @@ const SettlementDetailsModal = ({ isOpen, onClose, groupId, currentUserId, onSet
               <button key={f} onClick={() => setFilter(f)}
                 className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap"
                 style={filter === f ? {
-                  background: c.accentBg, color: c.accent, border: `1px solid rgba(101,116,243,0.3)`
+                  background: 'rgba(101,116,243,0.12)', color: c.accent, border: `1px solid rgba(101,116,243,0.3)`
                 } : {
                   background: 'rgba(255,255,255,0.03)', color: c.muted, border: `1px solid ${c.border2}`
                 }}>
@@ -209,7 +208,6 @@ const SettlementDetailsModal = ({ isOpen, onClose, groupId, currentUserId, onSet
                 const isDebtor   = s.from?._id === currentUserId;
                 const isCreditor = s.to?._id   === currentUserId;
                 const accentColor = isDebtor ? c.red : isCreditor ? c.green : c.muted;
-                const accentBg    = isDebtor ? c.redBg : isCreditor ? c.greenBg : 'rgba(255,255,255,0.03)';
 
                 return (
                   <div key={s._id}

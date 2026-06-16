@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { groupAPI } from '../api';
-import { Alert, Spinner, Avatar, EmptyState, Modal } from '../components/common';
+import { Alert, Spinner, Avatar, Modal } from '../components/common';
 import Layout from '../components/common/Layout';
 import { useAuth } from '../context/AuthContext';
 
@@ -155,6 +155,7 @@ export const GroupDetail = () => {
   const [copied, setCopied] = useState(false);
   const [removingId, setRemovingId] = useState(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchGroup(); }, [id]);
 
   const fetchGroup = async () => {

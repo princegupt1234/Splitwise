@@ -61,6 +61,7 @@ const Settlements = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [actionLoading, setActionLoading] = useState('');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchGroups(); }, []);
 
   const fetchGroups = async () => {
@@ -118,6 +119,7 @@ const Settlements = () => {
   };
 
   // Legacy instant-settle (kept for backward compat)
+  // eslint-disable-next-line no-unused-vars
   const handleInstantSettle = async (settlementId) => {
     if (!window.confirm('Mark this payment as fully settled (no confirmation needed)?')) return;
     try {

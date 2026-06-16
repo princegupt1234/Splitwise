@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
 import { reportAPI, groupAPI } from '../api';
 import { Alert, Spinner, Avatar, EmptyState } from '../components/common';
 import { formatCurrency, CATEGORY_ICONS, CATEGORY_COLORS } from '../utils/helpers';
@@ -19,10 +20,6 @@ const Reports = () => {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
 
-  useEffect(() => {
-    fetchGroups();
-  }, []);
-
   const fetchGroups = async () => {
     try {
       const { data } = await groupAPI.getAll();
@@ -39,6 +36,11 @@ const Reports = () => {
       setLoading(false);
     }
   };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
   const fetchReport = async (groupId, m, y) => {
     setLoading(true);

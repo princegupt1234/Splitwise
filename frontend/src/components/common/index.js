@@ -37,7 +37,7 @@ export const EmptyState = ({ icon, title, description, action }) => (
       {icon || '○'}
     </div>
       <p className="font-semibold text-gray-900 dark:text-theme-primary text-base mb-2">{title}</p>
-    {description && <p className="text-sm leading-relaxed mb-6 max-w-xs text-gray-600 dark:text-gray-300">{description}</p>}
+    {description && <p className="text-sm leading-relaxed mb-6 max-w-xs text-theme-muted dark:text-gray-300">{description}</p>}
     {action}
   </div>
 );
@@ -56,7 +56,7 @@ export const Modal = ({ isOpen, onClose, title, children }) => {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <span className="font-semibold text-gray-900 dark:text-white">{title}</span>
           <button onClick={onClose}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors bg-white/10 dark:bg-white/10 text-gray-600 dark:text-gray-300"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors bg-white/10 dark:bg-white/10 text-theme-muted dark:text-gray-300"
             onMouseEnter={e => e.currentTarget.style.color = '#fff'}
             onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}
           >✕</button>
@@ -87,7 +87,7 @@ export const Alert = ({ type = 'error', message, onClose }) => {
 export const StatCard = ({ label, value, icon, colorClass }) => (
   <div className="card p-4 flex flex-col gap-2">
     <span className="text-xl leading-none">{icon}</span>
-      <p className="text-lg font-bold tracking-tight text-gray-900 dark:text-theme-primary">{value}</p>
-    <p className="text-xs font-medium text-gray-600 dark:text-gray-300">{label}</p>
+      <p className="text-lg font-bold tracking-tight text-theme-primary">{value}</p>
+    <p className="text-xs font-medium text-theme-muted">{label}</p>
   </div>
 );

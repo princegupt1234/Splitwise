@@ -132,12 +132,18 @@ const Layout = ({ children }) => {
         </button>
 
         {!compact && (
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-2xl"
+          <div className="flex items-start gap-3 px-3 py-3 rounded-[28px]"
             style={{ background: 'var(--surface-overlay)', border: `1px solid ${border}` }}>
             <Avatar name={user?.name} size="sm" />
             <div className="min-w-0">
-              <p className="text-xs font-semibold truncate" style={{ color: labelText }}>{user?.name}</p>
-              <p className="text-xs truncate" style={{ color: mutedText }}>@{user?.username}</p>
+              <p className="text-sm font-semibold truncate" style={{ color: labelText }}>@{user?.username}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2 min-w-0">
+                <span className="rounded-full border px-2 py-1 text-[11px] font-semibold"
+                  style={{ borderColor: 'rgba(101,116,243,0.18)', color: '#6574f3' }}>
+                  Admin
+                </span>
+                <span className="text-xs truncate block min-w-0" style={{ color: mutedText }}>{user?.email}</span>
+              </div>
             </div>
           </div>
         )}

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { Link } from 'react-router-dom';
 import { expenseAPI, groupAPI } from '../api';
-import { Alert, Spinner, Avatar, EmptyState } from '../components/common';
+import { Alert, Spinner, EmptyState } from '../components/common';
 import { formatCurrency, formatDate, CATEGORY_ICONS, CATEGORY_COLORS, CATEGORIES } from '../utils/helpers';
 import Layout from '../components/common/Layout';
 import { useAuth } from '../context/AuthContext';
 
 const ExpenseHistory = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [groups, setGroups] = useState([]);
   const [activeGroup, setActiveGroup] = useState(null);
   const [expenses, setExpenses] = useState([]);
@@ -16,10 +16,6 @@ const ExpenseHistory = () => {
   const [loading, setLoading] = useState(true);
   const [filterCategory, setFilterCategory] = useState('');
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    fetchGroups();
-  }, []);
 
   const fetchGroups = async () => {
     try {
@@ -37,6 +33,11 @@ const ExpenseHistory = () => {
       setLoading(false);
     }
   };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
   const fetchExpenses = async (groupId, category = '') => {
     setLoading(true);

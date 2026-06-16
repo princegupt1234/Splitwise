@@ -1,21 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { groupAPI, reportAPI, settlementAPI } from '../api';
+import { groupAPI, reportAPI, settlementAPI, expenseAPI } from '../api';
 import { formatCurrency } from '../utils/helpers';
 import { PageLoader, StatCard, EmptyState, Spinner } from '../components/common';
 import Layout from '../components/common/Layout';
 import SettlementDetailsModal from '../components/common/SettlementDetailsModal';
 
 const QUICK_ACTIONS = [
-  { to: '/expenses/add', icon: '＋', label: 'Add Expense', sub: 'Record a new bill' },
-  { to: '/expenses',     icon: '☰',  label: 'History',    sub: 'View all expenses' },
-  { to: '/settlements',  icon: '↔',  label: 'Settle Up',  sub: 'Clear balances'    },
-  { to: '/reports',      icon: '↗',  label: 'Reports',    sub: 'Monthly summary'   },
+  { to: '/expenses/add', icon: '＋', label: 'Add Expense', sub: 'Record and split a new expense' },
+  { to: '/expenses',     icon: '🧾', label: 'Expense History', sub: 'View all expense records' },
+  { to: '/settlements',  icon: '💸', label: 'Settle Up', sub: 'Clear outstanding balances' },
+  { to: '/reports',      icon: '📊', label: 'Reports', sub: 'View analytics and summaries' },
 ];
 
 const SectionLabel = ({ children }) => (
   <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#3a3d50' }}>{children}</p>
+);
+
+const MiniCard = ({ icon, label, value, note, accent }) => (
+  <div className="rounded-[18px] border border-white/10 bg-white/5 p-4 shadow-sm min-h-[110px]">
+    <div className="flex items-start justify-between gap-3">
+      <div className="text-2xl">{icon}</div>
+      {accent && <span className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: accent }}>{note}</span>}
+    </div>
+    <p className="mt-4 text-xs uppercase tracking-[0.24em] text-theme-muted">{label}</p>
+    <p className="mt-2 text-2xl font-bold text-theme-primary tracking-tight">{value}</p>
+    {note && !accent && <p className="mt-2 text-xs text-theme-muted">{note}</p>}
+  </div>
 );
 
 const Dashboard = () => {
@@ -23,11 +35,36 @@ const Dashboard = () => {
   const [groups, setGroups]                 = useState([]);
   const [activeGroup, setActiveGroup]       = useState(null);
   const [summary, setSummary]               = useState(null);
+  const [activities, setActivities]         = useState([]);
+  const [settlementStats, setSettlementStats] = useState({ pendingAmount: 0, settledAmount: 0, pendingCount: 0, settledCount: 0, lastActivity: '' });
   const [loading, setLoading]               = useState(true);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [activityLoading, setActivityLoading] = useState(false);
   const [syncing, setSyncing]               = useState(false);
   const [detailsOpen, setDetailsOpen]       = useState(false);
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  const currentMonthYear = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const currentMonth = new Date().getMonth() + 1;
+  const currentYear = new Date().getFullYear();
+
+  const formatRelativeDate = (date) => {
+    if (!date) return 'Today';
+    const d = new Date(date);
+    const diffDays = Math.floor((new Date().setHours(0,0,0,0) - d.setHours(0,0,0,0)) / 86400000);
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchGroups(); }, []);
 
   const fetchGroups = async () => {
@@ -38,7 +75,8 @@ const Dashboard = () => {
         const saved = localStorage.getItem('activeGroupId');
         const group = saved ? data.groups.find((g) => g._id === saved) || data.groups[0] : data.groups[0];
         setActiveGroup(group);
-        fetchSummary(group._id);
+        await fetchSummary(group._id);
+        loadActivityData(group._id);
       }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
@@ -51,6 +89,53 @@ const Dashboard = () => {
       setSummary(data.summary);
     } catch (err) { console.error(err); }
     finally { setSummaryLoading(false); }
+  };
+
+  const loadActivityData = async (groupId) => {
+    if (!groupId) return;
+    setActivityLoading(true);
+    try {
+      const [expensesRes, settlementsRes] = await Promise.all([
+        expenseAPI.getByGroup(groupId, { month: currentMonth, year: currentYear }),
+        settlementAPI.getByGroup(groupId),
+      ]);
+      const expenseActivities = (expensesRes.data.expenses || []).map((expense) => ({
+        id: `expense-${expense._id}`,
+        type: 'expense',
+        title: `${expense.paidBy?.name || 'Someone'} added ${expense.title}`,
+        amount: expense.amount,
+        date: expense.date,
+        subtitle: `₹${expense.amount} • ${formatRelativeDate(expense.date)}`,
+      }));
+      const settlementActivities = (settlementsRes.data.settlements || [])
+        .filter((settlement) => settlement.status === 'settled')
+        .map((settlement) => ({
+          id: `settlement-${settlement._id}`,
+          type: 'settlement',
+          title: `Settlement completed with ${settlement.to?.name || settlement.to?.username || 'a member'}`,
+          amount: settlement.amount,
+          date: settlement.settledAt || settlement.createdAt,
+          subtitle: `₹${settlement.amount} • ${formatRelativeDate(settlement.settledAt || settlement.createdAt)}`,
+        }));
+      const activitiesList = [...expenseActivities, ...settlementActivities]
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 3);
+      setActivities(activitiesList);
+
+      const pending = settlementsRes.data.settlements.filter((s) => s.status !== 'settled');
+      const settled = settlementsRes.data.settlements.filter((s) => s.status === 'settled');
+      setSettlementStats({
+        pendingAmount: pending.reduce((sum, s) => sum + (s.remainingAmount ?? s.amount), 0),
+        settledAmount: settled.reduce((sum, s) => sum + s.amount, 0),
+        pendingCount: pending.length,
+        settledCount: settled.length,
+        lastActivity: activitiesList[0]?.subtitle || 'Today',
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActivityLoading(false);
+    }
   };
 
   const handleSync = async () => {
@@ -78,7 +163,26 @@ const Dashboard = () => {
     setActiveGroup(group);
     localStorage.setItem('activeGroupId', group._id);
     fetchSummary(group._id);
+    loadActivityData(group._id);
   };
+
+  const isGroupAdmin = activeGroup && ((activeGroup.createdBy?._id?.toString?.() || activeGroup.createdBy?.toString?.()) === user?._id?.toString());
+  const activeGroupRole = isGroupAdmin ? 'Admin' : 'Member';
+  const activeGroupCreated = activeGroup?.createdAt
+    ? new Date(activeGroup.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : '—';
+  const statusMessage = settlementStats.pendingCount === 0
+    ? 'All Settlements Cleared'
+    : `${settlementStats.pendingCount} Pending`;
+
+  const activeGroupCountLabel = `${groups.length} Active Group${groups.length === 1 ? '' : 's'}`;
+  const balanceSummaryLabel = settlementStats.pendingCount === 0
+    ? 'All Settled Up ✅'
+    : `${settlementStats.pendingCount} Pending`;
+  const recentActivities = activities.slice(0, 5);
+  const settlementProgress = settlementStats.pendingCount === 0 ? 100 : 32;
+
+  const greeting = getGreeting();
 
   if (loading) return <PageLoader />;
 
@@ -88,38 +192,33 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-5">
+      <div className="space-y-6">
 
-        {/* Row 1 — Greeting + Actions */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-widest mb-1 truncate" style={{ color: '#3a3d50' }}>
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-            </p>
-            <h1 className="text-xl sm:text-2xl font-bold text-theme-primary tracking-tight">
-              Hey, {user?.name?.split(' ')[0]} 👋
-            </h1>
+        <div className="rounded-[28px] border border-white/10 bg-white/80 dark:bg-surface/90 p-6 shadow-sm">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-[0.26em] text-theme-muted mb-2">Dashboard</p>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-theme-primary">{greeting}, {user?.name?.split(' ')[0]} 👋</h1>
+              <p className="mt-3 max-w-2xl text-sm text-theme-muted">Manage expenses, track balances, and stay on top of settlements.</p>
+            </div>
+            <div className="flex flex-wrap gap-3 justify-start xl:justify-end">
+              <Link to="/groups/create" className="btn-primary">+ Create Group</Link>
+              <Link to="/groups/join" className="btn-secondary">Join Group</Link>
+            </div>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            {activeGroup && (
-              <button onClick={handleSync} disabled={syncing} className="btn-secondary text-xs px-3 py-2 gap-1.5 w-full sm:w-auto">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                  strokeLinecap="round" strokeLinejoin="round"
-                  className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`}>
-                  <path d="M3 12a9 9 0 009 9 9.75 9.75 0 006.74-2.74L21 16"/>
-                  <path d="M21 12a9 9 0 00-9-9 9.75 9.75 0 00-6.74 2.74L3 8"/>
-                  <path d="M8 8H3V3M21 16v5h-5"/>
-                </svg>
-                {syncing ? 'Syncing…' : 'Sync'}
-              </button>
-            )}
-            <Link to="/groups/create" className="btn-primary text-xs px-3 py-2">+ Group</Link>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            <span className="inline-flex items-center rounded-full border border-white/15 bg-surface px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-theme-muted">
+              {activeGroupCountLabel}
+            </span>
+            <span className="inline-flex items-center rounded-full border border-white/15 bg-surface px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-theme-muted">
+              {balanceSummaryLabel}
+            </span>
           </div>
         </div>
 
-        {/* Empty state */}
         {groups.length === 0 ? (
-          <div className="card">
+          <div className="card p-6">
             <EmptyState
               icon="🏘️"
               title="No flat groups yet"
@@ -127,164 +226,160 @@ const Dashboard = () => {
               action={
                 <div className="flex gap-3 flex-wrap justify-center">
                   <Link to="/groups/create" className="btn-primary text-sm">Create Group</Link>
-                  <Link to="/groups/join"   className="btn-secondary text-sm">Join Group</Link>
+                  <Link to="/groups/join" className="btn-secondary text-sm">Join Group</Link>
                 </div>
               }
             />
           </div>
         ) : (
           <>
-            {/* Row 2 — Group selector + card */}
-            <div>
-              {groups.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-hide">
-                  {groups.map((g) => (
-                    <button key={g._id} onClick={() => handleGroupChange(g)}
-                      className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
-                      style={activeGroup?._id === g._id ? {
-                        background: 'rgba(101,116,243,0.2)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.35)',
-                      } : {
-                        background: 'rgba(255,255,255,0.04)', color: '#5a5d70', border: '1px solid rgba(255,255,255,0.07)',
-                      }}>
-                      {g.name}
-                    </button>
+            <div className="grid gap-4 xl:grid-cols-[1.5fr_minmax(0,0.9fr)]">
+              <div className="rounded-[28px] border border-white/10 bg-white/80 dark:bg-surface/90 p-6 shadow-sm">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-xs uppercase tracking-[0.24em] text-theme-muted mb-2">Current Balance</p>
+                    <p className="text-4xl font-semibold tracking-tight text-theme-primary">{balPositive && !balZero ? '+' : ''}{formatCurrency(bal)}</p>
+                    <p className="mt-3 text-sm text-theme-muted">{balZero ? 'All settled up 🎊' : balPositive ? 'Others owe you money 🎉' : 'You owe others'}</p>
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                    <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
+                      ✅ {balanceSummaryLabel}
+                    </span>
+                    <Link to="/settlements" className="btn-primary w-full sm:w-auto">Settle Up</Link>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-[22px] bg-surface p-4 border border-white/10">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-theme-muted">Pending Settlements</p>
+                    <p className="mt-3 text-2xl font-semibold text-theme-primary">{settlementStats.pendingCount}</p>
+                  </div>
+                    <div className="rounded-[22px] bg-surface p-4 border border-white/10">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-theme-muted">Last Activity</p>
+                    <p className="mt-3 text-2xl font-semibold text-theme-primary">{settlementStats.lastActivity || 'Today'}</p>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <button
+                    onClick={() => setDetailsOpen(true)}
+                    className="btn-secondary w-full sm:w-auto"
+                  >
+                    View Details
+                  </button>
+                </div>
+              </div>
+
+                  <div className="rounded-[28px] border border-white/10 bg-white/80 dark:bg-surface/90 p-5 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-theme-muted">Active Group</p>
+                    <p className="mt-2 text-xl font-semibold text-theme-primary truncate">{activeGroup.name}</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-3 text-sm text-theme-muted">
+                  <p className="text-theme-muted">{activeGroup.members?.length || 0} members • {activeGroupRole}</p>
+                  <p className="truncate"><span className="font-medium text-theme-primary">Invite Code:</span> <span className="font-mono text-sm text-theme-secondary">{activeGroup.code}</span></p>
+                </div>
+
+                {/* compact active group card: only essentials shown */}
+
+                <Link to={`/groups/${activeGroup._id}`}
+                  className="mt-6 inline-flex w-full items-center justify-center rounded-2xl border border-white/10 bg-surface px-4 py-3 text-sm font-semibold text-theme-primary transition hover:bg-white/90"
+                >
+                  View Group →
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-[1.3fr_minmax(0,0.8fr)]">
+              <div className="rounded-[28px] border border-white/10 bg-white/80 dark:bg-surface/90 p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-theme-muted">Quick Actions</p>
+                    <p className="mt-2 text-lg font-semibold text-theme-primary">Jump to the most important tasks</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {QUICK_ACTIONS.map((a) => (
+                    <Link key={a.to} to={a.to}
+                      className="rounded-[22px] border border-white/10 bg-surface p-4 text-center transition card-hover"
+                    >
+                      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-2xl" style={{ color: '#6574f3' }}>
+                        {a.icon}
+                      </div>
+                      <p className="mt-4 text-sm font-semibold text-theme-primary">{a.label}</p>
+                      <p className="mt-2 text-xs text-theme-muted">{a.sub}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-white/10 bg-white/80 dark:bg-surface/90 p-5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-theme-muted">Monthly Overview</p>
+                    <p className="mt-2 text-lg font-semibold text-theme-primary">This month at a glance</p>
+                  </div>
+                </div>
+                <div className="mt-6 grid gap-3">
+                  <div className="rounded-[22px] bg-surface p-4 border border-white/10">
+                    <p className="text-xs text-theme-muted uppercase tracking-[0.24em]">Total Expenses</p>
+                    <p className="mt-2 text-xl font-semibold text-theme-primary">{formatCurrency(summary.totalExpense)}</p>
+                  </div>
+                  <div className="rounded-[22px] bg-surface p-4 border border-white/10">
+                    <p className="text-xs text-theme-muted uppercase tracking-[0.24em]">Total Paid</p>
+                    <p className="mt-2 text-xl font-semibold text-theme-primary">{formatCurrency(summary.myPaid)}</p>
+                  </div>
+                  <div className="rounded-[22px] bg-surface p-4 border border-white/10">
+                    <p className="text-xs text-theme-muted uppercase tracking-[0.24em]">Pending Amount</p>
+                    <p className="mt-2 text-xl font-semibold text-theme-primary">{formatCurrency(settlementStats.pendingAmount)}</p>
+                  </div>
+                  <div className="rounded-[22px] bg-surface p-4 border border-white/10">
+                    <p className="text-xs text-theme-muted uppercase tracking-[0.24em]">Settled Amount</p>
+                    <p className="mt-2 text-xl font-semibold text-theme-primary">{formatCurrency(settlementStats.settledAmount)}</p>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <div className="h-2 rounded-full bg-surface border border-white/10 overflow-hidden">
+                    <div className="h-full rounded-full bg-emerald-400 transition-all duration-300" style={{ width: `${settlementProgress}%` }} />
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-theme-primary">
+                    {settlementStats.pendingCount === 0 ? '100% Settled' : 'Pending Settlements'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-white/10 bg-white/80 dark:bg-surface/90 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-theme-muted">Recent Activity</p>
+                  <p className="mt-2 text-lg font-semibold text-theme-primary">Latest updates</p>
+                </div>
+                <Link to="/expenses" className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>View All Activity</Link>
+              </div>
+              {activityLoading ? (
+                <div className="flex items-center justify-center py-10"><Spinner /></div>
+              ) : recentActivities.length === 0 ? (
+                <p className="text-sm text-theme-muted">No recent activity available yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {recentActivities.map((item) => (
+                    <div key={item.id} className="rounded-[24px] border border-white/10 bg-surface p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-theme-primary leading-tight">{item.title}</p>
+                          <p className="mt-2 text-xs text-theme-muted">{item.subtitle}</p>
+                        </div>
+                        <span className="text-sm font-semibold text-theme-primary">₹{item.amount}</span>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
-
-              {activeGroup && (
-                <div className="card p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
-                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 text-lg"
-                      style={{ background: 'rgba(101,116,243,0.12)', border: '1px solid rgba(101,116,243,0.2)' }}>
-                      🏘️
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-theme-primary truncate">{activeGroup.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        <span className="text-xs" style={{ color: '#4a4d5e' }}>
-                          Code&nbsp;<span className="font-mono font-bold" style={{ color: '#8196f8' }}>{activeGroup.code}</span>
-                        </span>
-                        <span className="text-xs" style={{ color: '#4a4d5e' }}>
-                          {activeGroup.members?.length} members
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <Link to={`/groups/${activeGroup._id}`}
-                    className="flex-shrink-0 w-full sm:w-auto text-center text-xs font-semibold px-3 py-1.5 rounded-xl transition-all"
-                    style={{ background: 'rgba(101,116,243,0.1)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.2)' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(101,116,243,0.18)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(101,116,243,0.1)'}
-                  >
-                    View →
-                  </Link>
-                </div>
-              )}
             </div>
-
-            {/* Rows 3 & 4 — Summary */}
-            {summaryLoading ? (
-              <div className="flex justify-center items-center py-24">
-                <Spinner size="lg" />
-              </div>
-            ) : summary ? (
-              <div className="space-y-4">
-
-                {/* Balance + Stats — stacked on mobile, side-by-side on sm+ */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                  {/* Balance hero card */}
-                  <div className="relative overflow-hidden rounded-[20px] p-5 flex flex-col justify-between min-h-[180px]"
-                    style={{
-                      background: balZero
-                        ? 'linear-gradient(135deg, #0f4c35 0%, #065f46 50%, #047857 100%)'
-                        : balPositive
-                          ? 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #059669 100%)'
-                          : 'linear-gradient(135deg, #4c0519 0%, #7f1d1d 50%, #991b1b 100%)',
-                      boxShadow: balPositive
-                        ? '0 0 40px rgba(16,185,129,0.18), inset 0 1px 0 rgba(255,255,255,0.1)'
-                        : '0 0 40px rgba(239,68,68,0.18), inset 0 1px 0 rgba(255,255,255,0.1)',
-                    }}>
-                    <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                    <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
-
-                    <div className="relative">
-                      <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                        Your Balance
-                      </p>
-                      <p className="text-3xl sm:text-4xl font-bold text-white tracking-tight mt-1">
-                        {balPositive && !balZero ? '+' : ''}{formatCurrency(bal)}
-                      </p>
-                      <p className="text-sm mt-2" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                        {balZero ? 'All settled up 🎊' : balPositive ? 'Others owe you money 🎉' : 'You owe others'}
-                      </p>
-                    </div>
-
-                    <div className="relative flex items-center gap-2 flex-wrap">
-                      <Link to="/settlements"
-                        className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
-                        style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.22)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
-                      >
-                        Settle Up →
-                      </Link>
-                      <button
-                        onClick={() => setDetailsOpen(true)}
-                        className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
-                        style={{ background: 'rgba(0,0,0,0.2)', color: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.12)' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.32)'; e.currentTarget.style.color = '#fff'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.2)'; e.currentTarget.style.color = 'rgba(255,255,255,0.75)'; }}
-                      >
-                        Details
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Stats 2×2 grid */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <StatCard label="Total Expenses" value={formatCurrency(summary.totalExpense)}        icon="💰" />
-                    <StatCard label="This Month"      value={formatCurrency(summary.currentMonthTotal)} icon="📅" />
-                    <StatCard label="You Paid"        value={formatCurrency(summary.myPaid)}             icon="✅" />
-                    <StatCard label="Your Share"      value={formatCurrency(summary.myShare)}            icon="📋" />
-                  </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div>
-                  <SectionLabel>Quick Actions</SectionLabel>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {QUICK_ACTIONS.map((a) => (
-                      <Link key={a.to} to={a.to}
-                        className="card p-4 flex flex-col gap-3 transition-all duration-200"
-                        onMouseEnter={e => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-                          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                        }}
-                        onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
-                        onMouseUp={e   => e.currentTarget.style.transform = 'translateY(-2px)'}
-                      >
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base font-bold"
-                          style={{ background: 'rgba(101,116,243,0.12)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.18)' }}>
-                          {a.icon}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-theme-primary leading-tight">{a.label}</p>
-                          <p className="text-xs mt-0.5" style={{ color: '#3a3d50' }}>{a.sub}</p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : null}
           </>
         )}
       </div>

@@ -24,7 +24,7 @@ router.post(
       .withMessage('Username is required')
       .matches(/^[a-zA-Z0-9_]+$/)
       .withMessage('Username can only contain letters, numbers, and underscores'),
-    body('email').optional({ checkFalsy: true }).isEmail().withMessage('Please enter a valid email'),
+    body('email').isEmail().withMessage('Please enter a valid email').notEmpty().withMessage('Email is required'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   ],
   async (req, res, next) => {
@@ -36,22 +36,26 @@ router.post(
 
       const { name, username, email, password } = req.body;
 
+      if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is required' });
+      }
+
       const existingUser = await User.findOne({ username: username.toLowerCase() });
       if (existingUser) {
         return res.status(400).json({ success: false, message: 'Username already taken' });
       }
 
-      if (email) {
-        const existingEmail = await User.findOne({ email: email.toLowerCase() });
-        if (existingEmail) {
-          return res.status(400).json({ success: false, message: 'Email already registered' });
-        }
+      const existingEmail = await User.findOne({ email: email.toLowerCase() });
+      if (existingEmail) {
+        return res.status(400).json({ success: false, message: 'Email already registered' });
       }
 
-      const userData = { name, username: username.toLowerCase(), password };
-      if (email) userData.email = email.toLowerCase();
-
-      const user = await User.create(userData);
+      const user = await User.create({
+        name,
+        username: username.toLowerCase(),
+        email: email.toLowerCase(),
+        password,
+      });
       const token = generateToken(user._id);
 
       res.status(201).json({
