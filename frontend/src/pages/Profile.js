@@ -220,49 +220,23 @@ const Profile = () => {
                   <span className="text-[12px] font-semibold px-2 py-1 rounded-full" style={{ background: 'rgba(34,197,94,0.08)', color: '#10b981', border: '1px solid rgba(16,185,129,0.12)' }}>
                     {user?.isActive === false ? '🔴 Inactive' : '🟢 Active'}
                   </span>
-                  <span className="text-[12px] font-semibold px-2 py-1 rounded-full" style={{ background: 'rgba(129,150,248,0.08)', color: '#6574f3', border: '1px solid rgba(101,116,243,0.12)' }}>
-                    {user?.role === 'admin' || user?.isAdmin ? '👑 Admin' : '👥 Member'}
-                  </span>
                   {(user?.emailVerified || user?.verified) ? (
-                    <span className="text-[12px] font-semibold px-2 py-1 rounded-full" style={{ background: 'rgba(16,185,129,0.08)', color: '#10b981', border: '1px solid rgba(16,185,129,0.12)' }}>✅ Verified Email</span>
+                    <span className="text-[12px] font-semibold px-2 py-1 rounded-full" style={{ background: 'rgba(16,185,129,0.08)', color: '#10b981', border: '1px solid rgba(16,185,129,0.12)' }}>✅ Verified</span>
                   ) : user?.email ? (
                     <span className="text-[12px] font-semibold px-2 py-1 rounded-full" style={{ background: 'rgba(249,115,22,0.06)', color: '#f59e0b', border: '1px solid rgba(249,115,22,0.12)' }}>⚠️ Unverified</span>
                   ) : null}
                 </div>
+                <button onClick={() => { setEditName(true); setShowPwd(false); }}
+                  className="mt-3 text-sm font-semibold px-3 py-1.5 rounded-lg" style={{ background: 'rgba(101,116,243,0.1)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.18)' }}>
+                  Edit Name
+                </button>
               </div>
             </div>
 
-            <div className="flex-1 md:flex-none md:ml-auto w-full md:w-64 mt-4 md:mt-0">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted">Member since</p>
-                  <p className="font-semibold" style={{ color: 'var(--text-base)' }}>{memberSince || '—'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted">Last login</p>
-                  <p className="font-semibold" style={{ color: 'var(--text-base)' }}>{lastLogin || '—'}</p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-xs text-muted">Profile</p>
-                  <p className="font-semibold" style={{ color: 'var(--text-base)' }}>{profileCompletion}% complete</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted">Groups</p>
-                  <p className="font-semibold" style={{ color: 'var(--text-base)' }}>{totalGroups}</p>
-                </div>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <button onClick={() => { setEditName(true); setShowPwd(false); }}
-                  className="flex-1 text-sm font-semibold px-3 py-2 rounded-lg" style={{ background: 'rgba(101,116,243,0.1)', color: '#8196f8', border: '1px solid rgba(101,116,243,0.18)' }}>
-                  Edit Profile
-                </button>
-                <button onClick={() => { setShowPwd((p) => !p); setEditName(false); setError(''); }}
-                  className="text-sm font-semibold px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', color: '#4a4d5e', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  Change Password
-                </button>
-              </div>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 w-full">
+              {memberSince && <div><p className="text-xs" style={{ color: 'var(--text-muted)' }}>Member since</p><p className="text-sm font-semibold" style={{ color: 'var(--text-base)' }}>{memberSince}</p></div>}
+              <div><p className="text-xs" style={{ color: 'var(--text-muted)' }}>Groups</p><p className="text-sm font-semibold" style={{ color: 'var(--text-base)' }}>{totalGroups}</p></div>
+              <div><p className="text-xs" style={{ color: 'var(--text-muted)' }}>Profile</p><p className="text-sm font-semibold" style={{ color: 'var(--text-base)' }}>{profileCompletion}% complete</p></div>
             </div>
 
           </div>
@@ -286,26 +260,27 @@ const Profile = () => {
           )}
         </Card>
 
-       {/* ── Overview ─────────────────────────────────── */}
-{stats && (
-  <section className="bg-white dark:bg-gray-900 shadow-lg rounded-lg p-6">
-    <SectionLabel>Overview</SectionLabel>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-2">
-      <StatPill label="Active Groups" value={stats.groups} color="#8196f8" />
-      <StatPill label="Total Paid" value={formatCurrency(stats.myPaid)} color="#10b981" />
-      <StatPill label="Total Share" value={formatCurrency(stats.myShare)} color="#f59e0b" />
-      <StatPill label="Pending Settlements" value={settleStats.pending} color="#f59e0b" />
-      <StatPill label="Settlements Completed" value={settleStats.settled} color="#10b981" />
-    </div>
-  </section>
-)}
+        {/* ── Overview ─────────────────────────────────── */}
+        {stats && (
+          <div>
+            <SectionLabel>Overview</SectionLabel>
+            <Card className="p-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <StatPill label="Groups" value={stats.groups} color="#8196f8" />
+                <StatPill label="Total Paid" value={formatCurrency(stats.myPaid)} color="#10b981" />
+                <StatPill label="Pending" value={settleStats.pending} color="#f59e0b" />
+                <StatPill label="Settled" value={settleStats.settled} color="#10b981" />
+              </div>
+            </Card>
+          </div>
+        )}
 
 
         {/* ── Financial Summary ───────────────────────── */}
         <div>
           <SectionLabel>Financial Summary</SectionLabel>
           <Card>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 p-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3">
               <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.04)' }}>
                 <p className="text-xs" style={{ color: '#4a4d5e' }}>Outstanding Balance</p>
                 <p className="text-lg font-bold mt-1" style={{ color: '#ef4444' }}>{formatCurrency(settleStats.pendingAmt)}</p>
@@ -315,17 +290,13 @@ const Profile = () => {
                 <p className="text-lg font-bold mt-1" style={{ color: '#10b981' }}>{formatCurrency(settleStats.settledAmt)}</p>
               </div>
               <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <p className="text-xs" style={{ color: '#4a4d5e' }}>Settlement Success Rate</p>
+                <p className="text-xs" style={{ color: '#4a4d5e' }}>Success Rate</p>
                 <p className="text-lg font-bold mt-1" style={{ color: '#6574f3' }}>
                   {(() => {
                     const total = (settleStats.settled || 0) + (settleStats.pending || 0);
                     return total === 0 ? '—' : `${Math.round((settleStats.settled / total) * 100)}%`;
                   })()}
                 </p>
-              </div>
-              <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <p className="text-xs" style={{ color: '#4a4d5e' }}>Pending Amount</p>
-                <p className="text-lg font-bold mt-1" style={{ color: '#f59e0b' }}>{formatCurrency(settleStats.pendingAmt)}</p>
               </div>
             </div>
           </Card>
@@ -409,16 +380,10 @@ const Profile = () => {
             <InfoRow icon="🔒" label="Password Status" value={user?.hasPassword ? 'Configured' : '—'} />
             <Divider />
             <div className="px-4 py-3.5">
-              <div className="flex gap-2">
-                <button onClick={() => { setEditName(true); setShowPwd(false); }}
-                  className="flex-1 text-sm font-semibold px-3 py-2 rounded-lg" style={{ background: 'rgba(101,116,243,0.08)', color: '#6574f3', border: '1px solid rgba(101,116,243,0.12)' }}>
-                  Edit Profile
-                </button>
-                <button onClick={() => { setShowPwd((p) => !p); setEditName(false); setError(''); }}
-                  className="flex-1 text-sm font-semibold px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', color: '#4a4d5e', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  Change Password
-                </button>
-              </div>
+              <button onClick={() => { setShowPwd((p) => !p); setEditName(false); setError(''); }}
+                className="w-full text-sm font-semibold px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', color: '#4a4d5e', border: '1px solid rgba(255,255,255,0.06)' }}>
+                Change Password
+              </button>
             </div>
             {showPwd && (
               <form onSubmit={handleChangePwd} className="px-4 pb-4 pt-2 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
