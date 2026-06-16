@@ -86,68 +86,74 @@ const Layout = ({ children }) => {
 
   const SidebarContent = ({ compact }) => (
     <>
-      <Link to="/dashboard" className={`flex items-center gap-3 mb-8 ${compact ? 'justify-center px-0' : 'px-3'}`}>
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #4f56e8, #6574f3)', boxShadow: '0 4px 12px rgba(101,116,243,0.4)' }}>
+      {/* Logo */}
+      <Link to="/dashboard" className={`flex items-center gap-3 mb-8 ${compact ? 'justify-center' : 'px-2'}`}>
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg,#4f56e8,#6574f3)', boxShadow: '0 4px 12px rgba(101,116,243,0.4)' }}>
           <span className="text-white font-bold text-sm">F</span>
         </div>
-        {!compact && <span className="font-bold tracking-tight" style={{ color: labelText }}>FlatSplit</span>}
+        {!compact && (
+          <span className="font-bold text-base tracking-tight" style={{ color: labelText }}>FlatSplit</span>
+        )}
       </Link>
 
-      <nav className="flex flex-col gap-1 flex-1">
+      {/* Nav */}
+      <nav className="flex flex-col gap-0.5 flex-1">
         {NAV.map(({ path, label, icon }) => {
           const active = isActive(path);
           return (
             <Link key={path} to={path}
-              className={`flex items-center gap-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150 ${compact ? 'justify-center px-2' : 'px-3'}`}
+              className={`flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${compact ? 'justify-center px-2' : 'px-3'}`}
               title={compact ? label : undefined}
               style={active ? {
-                background: 'rgba(101,116,243,0.15)',
-                color: activeText,
-                border: '1px solid rgba(101,116,243,0.2)',
+                background: 'rgba(101,116,243,0.12)',
+                color: '#6574f3',
               } : {
                 color: mutedText,
-                border: '1px solid transparent',
               }}>
-              {icon}
-              {!compact && label}
-              {!compact && active && <span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ background: activeText }} />}
+              <span style={{ opacity: active ? 1 : 0.7 }}>{icon}</span>
+              {!compact && <span>{label}</span>}
+              {!compact && active && <span className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#6574f3' }} />}
             </Link>
           );
         })}
       </nav>
 
-      <div className={`mt-auto flex flex-col gap-3 ${compact ? 'items-center px-0' : 'px-1'}`}>
+      {/* Bottom section */}
+      <div className={`mt-auto flex flex-col gap-2 ${compact ? 'items-center' : ''}`}>
+        {/* Theme toggle */}
         <button onClick={toggleTheme}
-          className={`flex items-center gap-3 py-2.5 rounded-2xl text-sm font-medium transition-all ${compact ? 'justify-center px-2 w-10' : 'px-3 w-full text-left'}`}
+          className={`flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all ${compact ? 'justify-center px-2 w-10' : 'px-3 w-full'}`}
           title={compact ? (isDark ? 'Light mode' : 'Dark mode') : undefined}
-          style={{ color: mutedText, border: '1px solid transparent' }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] flex-shrink-0">
+          style={{ color: mutedText }}
+          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] flex-shrink-0 opacity-70">
             {isDark
               ? <><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></>
               : <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
             }
           </svg>
-          {!compact && (isDark ? 'Light mode' : 'Dark mode')}
+          {!compact && <span>{isDark ? 'Light mode' : 'Dark mode'}</span>}
         </button>
 
+        {/* User profile card */}
         {!compact && (
-          <div className="flex items-start gap-3 px-3 py-3 rounded-[28px]"
-            style={{ background: 'var(--surface-overlay)', border: `1px solid ${border}` }}>
+          <Link to="/profile"
+            className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all"
+            style={{ background: 'var(--surface-overlay)', border: `1px solid ${border}` }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(101,116,243,0.3)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = border}>
             <Avatar name={user?.name} size="sm" />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold truncate" style={{ color: labelText }}>@{user?.username}</p>
-              <div className="mt-1 flex flex-wrap items-center gap-2 min-w-0">
-                <span className="rounded-full border px-2 py-1 text-[11px] font-semibold"
-                  style={{ borderColor: 'rgba(101,116,243,0.18)', color: '#6574f3' }}>
-                  Admin
-                </span>
-                <span className="text-xs truncate block min-w-0" style={{ color: mutedText }}>{user?.email}</span>
-              </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold truncate" style={{ color: labelText }}>{user?.name}</p>
+              <p className="text-[11px] truncate mt-0.5" style={{ color: mutedText }}>@{user?.username}</p>
+              {user?.email && <p className="text-[10px] truncate mt-0.5" style={{ color: mutedText }}>{user.email}</p>}
             </div>
-          </div>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md flex-shrink-0"
+              style={{ background: 'rgba(101,116,243,0.15)', color: '#6574f3' }}>Admin</span>
+          </Link>
         )}
-
         {compact && <Avatar name={user?.name} size="sm" />}
       </div>
     </>

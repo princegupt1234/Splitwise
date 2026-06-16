@@ -7,6 +7,24 @@ import { PageLoader, EmptyState, Spinner } from '../components/common';
 import Layout from '../components/common/Layout';
 import SettlementDetailsModal from '../components/common/SettlementDetailsModal';
 
+/* ── tiny UI primitives ─────────────────────────────────── */
+const StatCard = ({ icon, label, value, sub, iconBg }) => (
+  <div className="dash-card flex flex-col gap-3 p-5">
+    <div className="flex items-center justify-between">
+      <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <span className="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0" style={{ background: iconBg || 'rgba(101,116,243,0.1)' }}>{icon}</span>
+    </div>
+    <p className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-base)' }}>{value}</p>
+    {sub && <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{sub}</p>}
+  </div>
+);
+
+const ActivityIcon = ({ type }) => {
+  if (type === 'settlement') return <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>✓</span>;
+  return <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0" style={{ background: 'rgba(101,116,243,0.1)', color: '#6574f3' }}>🧾</span>;
+};
+
+/* ── main component ─────────────────────────────────────── */
 const Dashboard = () => {
   const { user } = useAuth();
   const [groups, setGroups]                   = useState([]);
@@ -27,6 +45,7 @@ const Dashboard = () => {
 
   const currentMonth = new Date().getMonth() + 1;
   const currentYear  = new Date().getFullYear();
+  const currentMonthName = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   const formatRelativeDate = (date) => {
     if (!date) return 'Today';
@@ -46,8 +65,8 @@ const Dashboard = () => {
       const { data } = await groupAPI.getAll();
       setGroups(data.groups);
       if (data.groups.length > 0) {
-        const saved  = localStorage.getItem('activeGroupId');
-        const group  = saved ? data.groups.find((g) => g._id === saved) || data.groups[0] : data.groups[0];
+        const saved = localStorage.getItem('activeGroupId');
+        const group = saved ? data.groups.find((g) => g._id === saved) || data.groups[0] : data.groups[0];
         setActiveGroup(group);
         await fetchSummary(group._id);
         loadActivityData(group._id);
@@ -73,6 +92,7 @@ const Dashboard = () => {
       ]);
       const expenseActs = (expensesRes.data.expenses || []).map((e) => ({
         id: `expense-${e._id}`,
+        type: 'expense',
         title: `${e.paidBy?.name || 'Someone'} added ${e.title}`,
         amount: e.amount,
         date: e.date,
@@ -82,6 +102,7 @@ const Dashboard = () => {
         .filter((s) => s.status === 'settled')
         .map((s) => ({
           id: `settlement-${s._id}`,
+          type: 'settlement',
           title: `Settlement completed with ${s.to?.name || s.to?.username || 'a member'}`,
           amount: s.amount,
           date: s.settledAt || s.createdAt,
@@ -125,41 +146,51 @@ const Dashboard = () => {
 
   if (loading) return <PageLoader />;
 
-  const isGroupAdmin      = activeGroup && ((activeGroup.createdBy?._id?.toString?.() || activeGroup.createdBy?.toString?.()) === user?._id?.toString());
-  const activeGroupRole   = isGroupAdmin ? 'Admin' : 'Member';
-  const bal               = summary?.myBalance ?? 0;
-  const balPositive       = bal >= 0;
-  const balZero           = bal === 0;
-  const balanceSummaryLabel = settlementStats.pendingCount === 0 ? 'All Settled Up ✅' : `${settlementStats.pendingCount} Pending`;
+  const isGroupAdmin    = activeGroup && ((activeGroup.createdBy?._id?.toString?.() || activeGroup.createdBy?.toString?.()) === user?._id?.toString());
+  const activeGroupRole = isGroupAdmin ? 'Admin' : 'Member';
+  const bal             = summary?.myBalance ?? 0;
+  const balZero         = bal === 0;
+  const balPositive     = bal >= 0;
+  const settledPct      = settlementStats.pendingCount === 0 ? 100 : 0;
+
+  const totalExpenses    = summary?.totalExpense ?? 0;
+  const monthlyExpenses  = summary?.monthlyExpense ?? summary?.totalExpense ?? 0;
+  const myPaid           = summary?.myPaid ?? 0;
+  const myShare          = summary?.myShare ?? 0;
 
   return (
     <Layout>
-      <div className="space-y-4 pb-4">
+      {/* ── page wrapper ── */}
+      <div className="dash-page">
 
-        {/* Header */}
-        <div className="rounded-2xl border border-white/10 bg-white/80 dark:bg-surface/90 p-4 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-[11px] uppercase tracking-widest text-theme-muted">Dashboard</p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-theme-primary">
-                {getGreeting()}, {user?.name?.split(' ')[0]} 👋
-              </h1>
-            </div>
-            <div className="flex gap-2">
-              <Link to="/groups/create" className="btn-primary flex-1 sm:flex-none text-center">+ Create</Link>
-              <Link to="/groups/join"   className="btn-secondary flex-1 sm:flex-none text-center">Join</Link>
-            </div>
+        {/* ════════════════════════════════════════
+            HEADER
+        ════════════════════════════════════════ */}
+        <div className="dash-header">
+          <div className="min-w-0">
+            <p className="dash-eyebrow">Dashboard</p>
+            <h1 className="dash-title">
+              {getGreeting()}, {user?.name?.split(' ')[0]} 👋
+            </h1>
+            <p className="dash-subtitle">Here's what's happening with your expenses today.</p>
+          </div>
+          <div className="dash-header-actions">
+            <Link to="/groups/create" className="btn-primary whitespace-nowrap">+ Create Group</Link>
+            <Link to="/groups/join"   className="btn-secondary whitespace-nowrap">Join Group</Link>
           </div>
         </div>
 
+        {/* ════════════════════════════════════════
+            EMPTY STATE
+        ════════════════════════════════════════ */}
         {groups.length === 0 ? (
-          <div className="card p-6">
+          <div className="dash-card p-8">
             <EmptyState
               icon="🏘️"
               title="No flat groups yet"
               description="Create a group or join one with a code to start tracking expenses with your flatmates."
               action={
-                <div className="flex gap-3 flex-wrap justify-center">
+                <div className="flex gap-3 flex-wrap justify-center mt-2">
                   <Link to="/groups/create" className="btn-primary text-sm">Create Group</Link>
                   <Link to="/groups/join"   className="btn-secondary text-sm">Join Group</Link>
                 </div>
@@ -168,78 +199,228 @@ const Dashboard = () => {
           </div>
         ) : (
           <>
-            {/* Balance + Active Group */}
-            <div className="grid gap-4 md:grid-cols-2">
-
-              {/* Balance Card */}
-              <div className="rounded-2xl border border-white/10 bg-white/80 dark:bg-surface/90 p-4 shadow-sm">
-                <p className="text-[11px] uppercase tracking-widest text-theme-muted">Current Balance</p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight text-theme-primary">
+            {/* ════════════════════════════════════════
+                ROW 1 — BALANCE HERO CARD
+            ════════════════════════════════════════ */}
+            <div className="dash-balance-card">
+              {/* left: balance info */}
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-widest opacity-70">Your Balance</p>
+                <p className="text-5xl font-bold tracking-tight">
                   {balPositive && !balZero ? '+' : ''}{formatCurrency(bal)}
                 </p>
-                <p className="mt-1 text-sm text-theme-muted">
-                  {balZero ? 'All settled up 🎊' : balPositive ? 'Others owe you 🎉' : 'You owe others'}
+                <p className="text-sm font-medium opacity-80">
+                  {balZero ? '✅ All settled up' : balPositive ? '🎉 Others owe you money' : '⚠️ You owe others'}
                 </p>
 
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-xl bg-surface p-3 border border-white/10">
-                    <p className="text-[10px] uppercase tracking-widest text-theme-muted">Pending</p>
-                    <p className="mt-1 text-xl font-semibold text-theme-primary">{settlementStats.pendingCount}</p>
+                {/* mini stats */}
+                <div className="flex gap-3 mt-3 flex-wrap">
+                  <div className="dash-balance-mini">
+                    <span className="text-[10px] uppercase tracking-widest opacity-60">⏳ Pending Settlements</span>
+                    <span className="text-xl font-bold">{settlementStats.pendingCount}</span>
                   </div>
-                  <div className="rounded-xl bg-surface p-3 border border-white/10">
-                    <p className="text-[10px] uppercase tracking-widest text-theme-muted">Last Activity</p>
-                    <p className="mt-1 text-sm font-semibold text-theme-primary truncate">{settlementStats.lastActivity || 'Today'}</p>
+                  <div className="dash-balance-mini">
+                    <span className="text-[10px] uppercase tracking-widest opacity-60">📅 Last Activity</span>
+                    <span className="text-sm font-semibold truncate max-w-[130px]">{settlementStats.lastActivity || 'Today'}</span>
                   </div>
-                </div>
-
-                <div className="mt-4 flex gap-2">
-                  <Link to="/settlements" className="btn-primary flex-1 text-center">Settle Up</Link>
-                  <button onClick={() => setDetailsOpen(true)} className="btn-secondary flex-1">Details</button>
                 </div>
               </div>
 
-              {/* Active Group Card */}
-              <div className="rounded-2xl border border-white/10 bg-white/80 dark:bg-surface/90 p-4 shadow-sm flex flex-col">
-                <p className="text-[11px] uppercase tracking-widest text-theme-muted">Active Group</p>
-                <p className="mt-2 text-xl font-semibold text-theme-primary truncate">{activeGroup.name}</p>
-                <p className="mt-1 text-sm text-theme-muted">
-                  {activeGroup.members?.length || 0} members • {activeGroupRole}
-                </p>
-                <p className="mt-1 text-sm text-theme-muted truncate">
-                  Code: <span className="font-mono text-theme-secondary">{activeGroup.code}</span>
-                </p>
-                <Link
-                  to={`/groups/${activeGroup._id}`}
-                  className="mt-auto pt-4 inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-surface px-4 py-2.5 text-sm font-semibold text-theme-primary transition hover:bg-white/90"
-                >
+              {/* right: actions */}
+              <div className="flex flex-row lg:flex-col gap-2 mt-5 lg:mt-0 flex-wrap">
+                <Link to="/settlements"
+                  className="inline-flex items-center justify-center gap-2 font-semibold text-sm py-2.5 px-5 rounded-2xl transition-all whitespace-nowrap"
+                  style={{ background: 'rgba(255,255,255,0.95)', color: '#4f56e8', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                  Settle Up
+                </Link>
+                <button
+                  onClick={() => setDetailsOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 font-semibold text-sm py-2.5 px-5 rounded-2xl transition-all whitespace-nowrap"
+                  style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }}>
+                  View Details
+                </button>
+              </div>
+            </div>
+
+            {/* ════════════════════════════════════════
+                ROW 2 — STAT CARDS
+            ════════════════════════════════════════ */}
+            <div className="dash-stats-grid">
+              <StatCard
+                icon="💰"
+                label="Total Expenses"
+                value={formatCurrency(totalExpenses)}
+                sub="All time total"
+                iconBg="rgba(101,116,243,0.1)"
+              />
+              <StatCard
+                icon="📅"
+                label={currentMonthName}
+                value={formatCurrency(monthlyExpenses)}
+                sub="This month"
+                iconBg="rgba(59,130,246,0.1)"
+              />
+              <StatCard
+                icon="✅"
+                label="You Paid"
+                value={formatCurrency(myPaid)}
+                sub="Total paid"
+                iconBg="rgba(16,185,129,0.1)"
+              />
+              <StatCard
+                icon="📋"
+                label="Your Share"
+                value={formatCurrency(myShare)}
+                sub="Total share"
+                iconBg="rgba(245,158,11,0.1)"
+              />
+            </div>
+
+            {/* ════════════════════════════════════════
+                ROW 3 — QUICK ACTIONS + ACTIVE GROUP
+            ════════════════════════════════════════ */}
+            <div className="dash-two-col">
+
+              {/* Quick Actions */}
+              <div className="dash-card p-5 flex flex-col gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
+                  <p className="text-base font-semibold" style={{ color: 'var(--text-base)' }}>What would you like to do?</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { to: '/expenses/add', icon: '➕', label: 'Add Expense',      sub: 'Record new expense' },
+                    { to: '/expenses',     icon: '🧾', label: 'Expense History',  sub: 'View all expenses' },
+                    { to: '/settlements',  icon: '💸', label: 'Settle Up',        sub: 'Clear outstanding' },
+                    { to: '/reports',      icon: '📊', label: 'Reports',          sub: 'View analytics' },
+                  ].map(({ to, icon, label, sub }) => (
+                    <Link key={to} to={to} className="dash-action-tile">
+                      <span className="text-xl leading-none">{icon}</span>
+                      <span className="text-sm font-semibold" style={{ color: 'var(--text-base)' }}>{label}</span>
+                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{sub}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Active Group */}
+              <div className="dash-card p-5 flex flex-col gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'var(--text-muted)' }}>Active Group</p>
+                  <p className="text-base font-semibold" style={{ color: 'var(--text-base)' }}>Current flat group</p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg,rgba(101,116,243,0.15),rgba(101,116,243,0.05))', border: '1px solid rgba(101,116,243,0.2)' }}>
+                    🏠
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-lg font-bold truncate" style={{ color: 'var(--text-base)' }}>{activeGroup.name}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                      {activeGroup.members?.length || 0} members • {activeGroupRole}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="dash-info-row">
+                    <span style={{ color: 'var(--text-muted)' }}>Invite Code</span>
+                    <span className="font-mono font-bold text-sm tracking-wider px-2 py-0.5 rounded-lg"
+                      style={{ background: 'rgba(101,116,243,0.08)', color: '#6574f3' }}>
+                      {activeGroup.code}
+                    </span>
+                  </div>
+                  <div className="dash-info-row">
+                    <span style={{ color: 'var(--text-muted)' }}>Created</span>
+                    <span style={{ color: 'var(--text-base)' }}>
+                      {activeGroup.createdAt
+                        ? new Date(activeGroup.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                        : '—'}
+                    </span>
+                  </div>
+                </div>
+
+                <Link to={`/groups/${activeGroup._id}`} className="dash-view-btn mt-auto">
                   View Group →
                 </Link>
               </div>
             </div>
 
-            {/* Recent Activity */}
-            <div className="rounded-2xl border border-white/10 bg-white/80 dark:bg-surface/90 p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold text-theme-primary">Recent Activity</p>
-                <Link to="/expenses" className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>View All</Link>
-              </div>
-              {activityLoading ? (
-                <div className="flex items-center justify-center py-8"><Spinner /></div>
-              ) : activities.length === 0 ? (
-                <p className="text-sm text-theme-muted py-4">No recent activity yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {activities.map((item) => (
-                    <div key={item.id} className="rounded-xl border border-white/10 bg-surface p-3 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-theme-primary leading-tight truncate">{item.title}</p>
-                        <p className="mt-0.5 text-xs text-theme-muted">{item.subtitle}</p>
+            {/* ════════════════════════════════════════
+                ROW 4 — RECENT ACTIVITY + MONTHLY OVERVIEW
+            ════════════════════════════════════════ */}
+            <div className="dash-two-col">
+
+              {/* Recent Activity */}
+              <div className="dash-card p-5 flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'var(--text-muted)' }}>Activity</p>
+                    <p className="text-base font-semibold" style={{ color: 'var(--text-base)' }}>Recent Activity</p>
+                  </div>
+                  <Link to="/expenses" className="text-xs font-semibold px-3 py-1.5 rounded-xl transition-all"
+                    style={{ background: 'rgba(101,116,243,0.08)', color: '#6574f3' }}>
+                    View All
+                  </Link>
+                </div>
+
+                {activityLoading ? (
+                  <div className="flex items-center justify-center py-8"><Spinner /></div>
+                ) : activities.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 gap-2">
+                    <span className="text-3xl">📭</span>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No recent activity yet.</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {activities.slice(0, 3).map((item, i) => (
+                      <div key={item.id} className="flex items-center gap-3">
+                        <ActivityIcon type={item.type} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate" style={{ color: 'var(--text-base)' }}>{item.title}</p>
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{item.subtitle}</p>
+                        </div>
+                        <span className="text-sm font-bold flex-shrink-0" style={{ color: 'var(--text-base)' }}>₹{item.amount}</span>
                       </div>
-                      <span className="shrink-0 text-sm font-semibold text-theme-primary">₹{item.amount}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Monthly Overview */}
+              <div className="dash-card p-5 flex flex-col gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'var(--text-muted)' }}>Overview</p>
+                  <p className="text-base font-semibold" style={{ color: 'var(--text-base)' }}>This Month Overview</p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {[
+                    { label: 'Total Expenses',  value: formatCurrency(monthlyExpenses),               color: 'var(--text-base)' },
+                    { label: 'Total Paid',       value: formatCurrency(myPaid),                        color: '#10b981' },
+                    { label: 'Pending Amount',   value: formatCurrency(settlementStats.pendingAmount), color: '#f59e0b' },
+                    { label: 'Settled Amount',   value: formatCurrency(settlementStats.settledAmount), color: '#6574f3' },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="dash-info-row py-2.5" style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                      <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{label}</span>
+                      <span className="text-sm font-bold" style={{ color }}>{value}</span>
                     </div>
                   ))}
                 </div>
-              )}
+
+                {/* Progress bar */}
+                <div className="mt-auto pt-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Settlement Progress</span>
+                    <span className="text-xs font-bold" style={{ color: '#10b981' }}>{settledPct}% Settled</span>
+                  </div>
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-border)' }}>
+                    <div className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${settledPct}%`, background: 'linear-gradient(90deg,#10b981,#34d399)' }} />
+                  </div>
+                </div>
+              </div>
             </div>
           </>
         )}
