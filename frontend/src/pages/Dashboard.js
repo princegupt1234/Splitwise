@@ -6,6 +6,7 @@ import { formatCurrency } from '../utils/helpers';
 import { PageLoader, EmptyState, Spinner } from '../components/common';
 import Layout from '../components/common/Layout';
 import SettlementDetailsModal from '../components/common/SettlementDetailsModal';
+import { useToast } from '../context/ToastContext';
 
 /* ── tiny UI primitives ─────────────────────────────────── */
 const StatCard = ({ icon, label, value, sub, iconBg }) => (
@@ -27,6 +28,7 @@ const ActivityIcon = ({ type }) => {
 /* ── main component ─────────────────────────────────────── */
 const Dashboard = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [groups, setGroups]                   = useState([]);
   const [activeGroup, setActiveGroup]         = useState(null);
   const [summary, setSummary]                 = useState(null);
@@ -144,7 +146,8 @@ const Dashboard = () => {
     try {
       await settlementAPI.generate(activeGroup._id);
       await Promise.all([fetchSummary(activeGroup._id), loadActivityData(activeGroup._id)]);
-    } catch (err) { console.error(err); }
+      toast('Balances synced!');
+    } catch (err) { console.error(err); toast('Sync failed', 'error'); }
     finally { setSyncing(false); }
   };
 

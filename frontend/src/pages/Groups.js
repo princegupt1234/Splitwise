@@ -4,6 +4,7 @@ import { groupAPI } from '../api';
 import { Alert, Spinner, Avatar, Modal } from '../components/common';
 import Layout from '../components/common/Layout';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 // ─────────────────────────────────────────
 // Create Group Page
@@ -13,6 +14,7 @@ export const CreateGroup = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const toast = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,6 +23,7 @@ export const CreateGroup = () => {
     try {
       const { data } = await groupAPI.create({ name });
       localStorage.setItem('activeGroupId', data.group._id);
+      toast(`Group "${data.group.name}" created!`);
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create group');
@@ -146,6 +149,7 @@ export const GroupDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [inviteModal, setInviteModal] = useState(false);
@@ -154,6 +158,7 @@ export const GroupDetail = () => {
   const [inviteSuccess, setInviteSuccess] = useState('');
   const [copied, setCopied] = useState(false);
   const [removingId, setRemovingId] = useState(null);
+  const [leaving, setLeaving] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchGroup(); }, [id]);
@@ -194,10 +199,25 @@ export const GroupDetail = () => {
     try {
       const { data } = await groupAPI.removeMember(id, memberId);
       setGroup(data.group);
+      toast(`${memberName} removed from group`);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to remove member');
+      toast(err.response?.data?.message || 'Failed to remove member', 'error');
     } finally {
       setRemovingId(null);
+    }
+  };
+
+  const handleLeave = async () => {
+    if (!window.confirm('Are you sure you want to leave this group?')) return;
+    setLeaving(true);
+    try {
+      await groupAPI.leave(id);
+      localStorage.removeItem('activeGroupId');
+      toast('You left the group');
+      navigate('/dashboard');
+    } catch (err) {
+      toast(err.response?.data?.message || 'Failed to leave group', 'error');
+      setLeaving(false);
     }
   };
 
@@ -273,6 +293,19 @@ export const GroupDetail = () => {
               <Link to="/expenses/add" className="btn-primary text-center text-sm py-3">Add Expense</Link>
               <Link to="/settlements" className="btn-secondary text-center text-sm py-3">Settlements</Link>
         </div>
+
+        {/* Leave group */}
+        {!isAdmin && (
+          <button
+            onClick={handleLeave}
+            disabled={leaving}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold transition-all disabled:opacity-50"
+            style={{ background: 'rgba(239,68,68,0.08)', color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.2)' }}
+          >
+            {leaving ? <Spinner size="sm" /> : '🚪'}
+            {leaving ? 'Leaving...' : 'Leave Group'}
+          </button>
+        )}
       </div>
 
       {/* Invite Modal */}

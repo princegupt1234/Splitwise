@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Link } from 'react-router-dom';
 import { expenseAPI, groupAPI } from '../api';
-import { Alert, Spinner, EmptyState } from '../components/common';
+import { Alert, Spinner, EmptyState, Modal } from '../components/common';
 import { formatCurrency, formatDate, CATEGORY_ICONS, CATEGORY_COLORS, CATEGORIES } from '../utils/helpers';
 import Layout from '../components/common/Layout';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const ExpenseHistory = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [groups, setGroups] = useState([]);
   const [activeGroup, setActiveGroup] = useState(null);
   const [expenses, setExpenses] = useState([]);
@@ -16,6 +18,9 @@ const ExpenseHistory = () => {
   const [loading, setLoading] = useState(true);
   const [filterCategory, setFilterCategory] = useState('');
   const [error, setError] = useState('');
+  const [editExpense, setEditExpense] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [editLoading, setEditLoading] = useState(false);
 
   const fetchGroups = async () => {
     try {
@@ -70,10 +75,50 @@ const ExpenseHistory = () => {
     try {
       await expenseAPI.delete(expenseId);
       setExpenses((prev) => prev.filter((e) => e._id !== expenseId));
+      toast('Expense deleted');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete expense');
+      toast(err.response?.data?.message || 'Failed to delete expense', 'error');
     }
   };
+
+  const openEdit = (expense) => {
+    setEditExpense(expense);
+    setEditForm({
+      title: expense.title,
+      amount: expense.amount,
+      category: expense.category,
+      date: expense.date?.split('T')[0] || new Date().toISOString().split('T')[0],
+      notes: expense.notes || '',
+      splitAmong: expense.splitAmong?.map((m) => m._id) || [],
+    });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editForm.amount || parseFloat(editForm.amount) <= 0) return;
+    setEditLoading(true);
+    try {
+      const { data } = await expenseAPI.update(editExpense._id, editForm);
+      setExpenses((prev) => prev.map((ex) => ex._id === editExpense._id ? data.expense : ex));
+      setEditExpense(null);
+      toast('Expense updated');
+    } catch (err) {
+      toast(err.response?.data?.message || 'Failed to update expense', 'error');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const toggleEditMember = (memberId) => {
+    setEditForm((prev) => ({
+      ...prev,
+      splitAmong: prev.splitAmong.includes(memberId)
+        ? prev.splitAmong.filter((id) => id !== memberId)
+        : [...prev.splitAmong, memberId],
+    }));
+  };
+
+  const editMembers = activeGroup?.members || [];
 
   return (
     <Layout>
@@ -189,6 +234,13 @@ const ExpenseHistory = () => {
                 {expense.createdBy?._id === user._id && (
                   <div className="flex justify-end mt-3 pt-3 gap-3 border-t" style={{ borderColor: 'var(--surface-border)' }}>
                     <button
+                      onClick={() => openEdit(expense)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg min-h-[32px]"
+                      style={{ background: 'rgba(101,116,243,0.08)', color: '#6574f3', border: '1px solid rgba(101,116,243,0.2)' }}
+                    >
+                      Edit
+                    </button>
+                    <button
                       onClick={() => handleDelete(expense._id)}
                       className="text-xs font-semibold px-3 py-1.5 rounded-lg min-h-[32px]"
                       style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.15)' }}
@@ -202,6 +254,75 @@ const ExpenseHistory = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Expense Modal */}
+      <Modal isOpen={!!editExpense} onClose={() => setEditExpense(null)} title="Edit Expense">
+        {editExpense && (
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div>
+              <label className="label">Title</label>
+              <input className="input-field" value={editForm.title}
+                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} required />
+            </div>
+            <div>
+              <label className="label">Amount (₹)</label>
+              <input type="number" className="input-field" value={editForm.amount} min="0.01" step="0.01"
+                onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} required />
+            </div>
+            <div>
+              <label className="label">Category</label>
+              <div className="grid grid-cols-3 gap-2">
+                {CATEGORIES.map((cat) => (
+                  <button key={cat} type="button"
+                    onClick={() => setEditForm({ ...editForm, category: cat })}
+                    className="flex flex-col items-center gap-1 p-2 rounded-xl text-xs transition-all"
+                    style={editForm.category === cat
+                      ? { background: 'rgba(101,116,243,0.15)', border: '2px solid rgba(101,116,243,0.5)', color: 'var(--accent)' }
+                      : { background: 'var(--surface-overlay)', border: '2px solid var(--surface-border)', color: 'var(--text-base)' }}
+                  >
+                    <span className="text-lg">{CATEGORY_ICONS[cat]}</span>{cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="label">Split between</label>
+              <div className="space-y-1.5">
+                {editMembers.map((m) => (
+                  <button key={m._id} type="button"
+                    onClick={() => toggleEditMember(m._id)}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all"
+                    style={editForm.splitAmong.includes(m._id)
+                      ? { background: 'rgba(101,116,243,0.1)', border: '1.5px solid rgba(101,116,243,0.4)' }
+                      : { background: 'var(--surface-overlay)', border: '1.5px solid var(--surface-border)' }}
+                  >
+                    <span className="flex-1 text-left font-medium" style={{ color: 'var(--text-base)' }}>
+                      {m.name}{m._id === user._id ? ' (You)' : ''}
+                    </span>
+                    <span style={{ color: editForm.splitAmong.includes(m._id) ? 'var(--accent)' : 'var(--text-muted)' }}>
+                      {editForm.splitAmong.includes(m._id) ? '✓' : '○'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="label">Date</label>
+              <input type="date" className="input-field" value={editForm.date}
+                onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} />
+            </div>
+            <div>
+              <label className="label">Notes</label>
+              <input className="input-field" value={editForm.notes} placeholder="Optional"
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
+            </div>
+            <button type="submit" disabled={editLoading} className="btn-primary w-full flex items-center justify-center gap-2">
+              {editLoading && <Spinner size="sm" />}
+              {editLoading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </form>
+        )}
+      </Modal>
     </Layout>
   );
 };
