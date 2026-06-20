@@ -35,6 +35,7 @@ const Dashboard = () => {
   const [loading, setLoading]                 = useState(true);
   const [activityLoading, setActivityLoading] = useState(false);
   const [detailsOpen, setDetailsOpen]         = useState(false);
+  const [syncing, setSyncing]                 = useState(false);
 
   const getGreeting = () => {
     const h = new Date().getHours();
@@ -137,6 +138,16 @@ const Dashboard = () => {
     } catch (err) { console.error(err); }
   };
 
+  const handleSync = async () => {
+    if (!activeGroup || syncing) return;
+    setSyncing(true);
+    try {
+      await settlementAPI.generate(activeGroup._id);
+      await Promise.all([fetchSummary(activeGroup._id), loadActivityData(activeGroup._id)]);
+    } catch (err) { console.error(err); }
+    finally { setSyncing(false); }
+  };
+
   const handleGroupChange = (group) => {
     setActiveGroup(group);
     localStorage.setItem('activeGroupId', group._id);
@@ -175,6 +186,14 @@ const Dashboard = () => {
             <p className="dash-subtitle">Here's what's happening with your expenses today.</p>
           </div>
           <div className="dash-header-actions">
+            <button
+              onClick={handleSync}
+              disabled={syncing || !activeGroup}
+              className="btn-secondary whitespace-nowrap flex items-center gap-1.5 disabled:opacity-50"
+              title="Recalculate balances & settlements">
+              <span className={syncing ? 'animate-spin inline-block' : ''}>🔄</span>
+              {syncing ? 'Syncing…' : 'Sync'}
+            </button>
             <Link to="/groups/create" className="btn-primary whitespace-nowrap">+ Create Group</Link>
             <Link to="/groups/join"   className="btn-secondary whitespace-nowrap">Join Group</Link>
           </div>
@@ -303,46 +322,47 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Active Group */}
-              <div className="dash-card p-5 flex flex-col gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'var(--text-muted)' }}>Active Group</p>
-                  <p className="text-base font-semibold" style={{ color: 'var(--text-base)' }}>Current flat group</p>
+              {/* All Groups */}
+              <div className="dash-card p-5 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'var(--text-muted)' }}>My Groups</p>
+                    <p className="text-base font-semibold" style={{ color: 'var(--text-base)' }}>{groups.length} group{groups.length !== 1 ? 's' : ''}</p>
+                  </div>
+                  <Link to="/groups/create" className="text-xs font-semibold px-3 py-1.5 rounded-xl"
+                    style={{ background: 'rgba(101,116,243,0.08)', color: '#6574f3' }}>+ New</Link>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg,rgba(101,116,243,0.15),rgba(101,116,243,0.05))', border: '1px solid rgba(101,116,243,0.2)' }}>
-                    🏠
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-lg font-bold truncate" style={{ color: 'var(--text-base)' }}>{activeGroup.name}</p>
-                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                      {activeGroup.members?.length || 0} members • {activeGroupRole}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="dash-info-row">
-                    <span style={{ color: 'var(--text-muted)' }}>Invite Code</span>
-                    <span className="font-mono font-bold text-sm tracking-wider px-2 py-0.5 rounded-lg"
-                      style={{ background: 'rgba(101,116,243,0.08)', color: '#6574f3' }}>
-                      {activeGroup.code}
-                    </span>
-                  </div>
-                  <div className="dash-info-row">
-                    <span style={{ color: 'var(--text-muted)' }}>Created</span>
-                    <span style={{ color: 'var(--text-base)' }}>
-                      {activeGroup.createdAt
-                        ? new Date(activeGroup.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-                        : '—'}
-                    </span>
-                  </div>
+                <div className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '260px' }}>
+                  {groups.map((g) => {
+                    const isActive = g._id === activeGroup?._id;
+                    const gIsAdmin = (g.createdBy?._id?.toString?.() || g.createdBy?.toString?.()) === user?._id?.toString();
+                    return (
+                      <button
+                        key={g._id}
+                        onClick={() => handleGroupChange(g)}
+                        className="flex items-center gap-3 w-full text-left rounded-2xl px-3 py-2.5 transition-all"
+                        style={isActive
+                          ? { background: 'rgba(101,116,243,0.12)', border: '1.5px solid rgba(101,116,243,0.35)' }
+                          : { background: 'var(--surface-overlay)', border: '1.5px solid transparent' }}
+                      >
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                          style={{ background: isActive ? 'rgba(101,116,243,0.18)' : 'rgba(101,116,243,0.07)' }}>🏠</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-base)' }}>{g.name}</p>
+                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                            {g.members?.length || 0} members • {gIsAdmin ? 'Admin' : 'Member'}
+                          </p>
+                        </div>
+                        {isActive && <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                          style={{ background: 'rgba(101,116,243,0.15)', color: '#6574f3' }}>Active</span>}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <Link to={`/groups/${activeGroup._id}`} className="dash-view-btn mt-auto">
-                  View Group →
+                  View Active Group →
                 </Link>
               </div>
             </div>
