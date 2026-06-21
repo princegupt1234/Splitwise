@@ -150,8 +150,7 @@ const Layout = ({ children }) => {
               <p className="text-[11px] truncate mt-0.5" style={{ color: mutedText }}>@{user?.username}</p>
               {user?.email && <p className="text-[10px] truncate mt-0.5" style={{ color: mutedText }}>{user.email}</p>}
             </div>
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md flex-shrink-0"
-              style={{ background: 'rgba(101,116,243,0.15)', color: '#6574f3' }}>Admin</span>
+
           </Link>
         )}
         {compact && <Avatar name={user?.name} size="sm" />}

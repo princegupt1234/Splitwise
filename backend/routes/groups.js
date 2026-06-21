@@ -217,6 +217,10 @@ router.delete('/:id/leave', protect, async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Group not found' });
     }
 
+    if (group.createdBy.toString() === req.user._id.toString()) {
+      return res.status(400).json({ success: false, message: 'Admin cannot leave the group. Transfer ownership or delete the group instead.' });
+    }
+
     group.members = group.members.filter((m) => m.toString() !== req.user._id.toString());
     await group.save();
 

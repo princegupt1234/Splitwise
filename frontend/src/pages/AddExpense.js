@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useNavigate } from 'react-router-dom';
 import { expenseAPI, groupAPI } from '../api';
 import { Alert, Spinner, Avatar } from '../components/common';

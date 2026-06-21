@@ -10,6 +10,7 @@ const groupRoutes = require('./routes/groups');
 const expenseRoutes = require('./routes/expenses');
 const settlementRoutes = require('./routes/settlements');
 const reportRoutes = require('./routes/reports');
+const adminRoutes = require('./routes/admin');
 
 // Connect to MongoDB
 connectDB();
@@ -35,6 +36,7 @@ app.use('/api/groups', groupRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/settlements', settlementRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

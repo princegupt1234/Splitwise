@@ -165,10 +165,14 @@ const Dashboard = () => {
   const bal             = summary?.myBalance ?? 0;
   const balZero         = bal === 0;
   const balPositive     = bal >= 0;
-  const settledPct      = settlementStats.pendingCount === 0 ? 100 : 0;
+  const settledPct = (() => {
+    const total = settlementStats.pendingCount + settlementStats.settledCount;
+    if (total === 0) return 100;
+    return Math.round((settlementStats.settledCount / total) * 100);
+  })();
 
   const totalExpenses    = summary?.totalExpense ?? 0;
-  const monthlyExpenses  = summary?.monthlyExpense ?? summary?.totalExpense ?? 0;
+  const monthlyExpenses  = summary?.currentMonthTotal ?? summary?.monthlyExpense ?? 0;
   const myPaid           = summary?.myPaid ?? 0;
   const myShare          = summary?.myShare ?? 0;
 
