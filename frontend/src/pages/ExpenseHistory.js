@@ -7,6 +7,8 @@ import { formatCurrency, formatDate, CATEGORY_ICONS, CATEGORY_COLORS, CATEGORIES
 import Layout from '../components/common/Layout';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const ExpenseHistory = () => {
   const { user } = useAuth();
@@ -81,6 +83,53 @@ const ExpenseHistory = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    if (!activeGroup) return;
+    try {
+      const params = {};
+      if (filterCategory) params.category = filterCategory;
+      const { data } = await expenseAPI.exportData(activeGroup._id, params);
+      const doc = new jsPDF();
+
+      // Header
+      doc.setFontSize(18);
+      doc.setTextColor(79, 86, 232);
+      doc.text('FlatSplit — Expense Report', 14, 18);
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Group: ${data.groupName}`, 14, 26);
+      doc.text(`Exported: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`, 14, 32);
+      if (filterCategory) doc.text(`Category: ${filterCategory}`, 14, 38);
+
+      const rows = data.expenses.map((e) => [
+        e.title,
+        e.category,
+        e.paidBy?.name || '—',
+        `Rs.${e.amount}`,
+        formatDate(e.date),
+        e.splitAmong?.map((m) => m.name).join(', ') || '—',
+      ]);
+
+      const total = data.expenses.reduce((s, e) => s + e.amount, 0);
+
+      autoTable(doc, {
+        startY: filterCategory ? 44 : 38,
+        head: [['Title', 'Category', 'Paid By', 'Amount', 'Date', 'Split Among']],
+        body: rows,
+        foot: [['', '', 'TOTAL', `Rs.${total.toFixed(2)}`, '', '']],
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [79, 86, 232], textColor: 255, fontStyle: 'bold' },
+        footStyles: { fillColor: [240, 240, 255], textColor: [79, 86, 232], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [248, 249, 255] },
+      });
+
+      doc.save(`${data.groupName}-expenses.pdf`);
+      toast('PDF exported!');
+    } catch (err) {
+      toast('Failed to export PDF', 'error');
+    }
+  };
+
   const openEdit = (expense) => {
     setEditExpense(expense);
     setEditForm({
@@ -125,7 +174,13 @@ const ExpenseHistory = () => {
       <div className="py-5 space-y-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h1 className="text-2xl font-bold text-[var(--text-base)]">Expenses</h1>
-          <Link to="/expenses/add" className="btn-primary text-sm px-4 py-2 w-full sm:w-auto text-center">+ Add</Link>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button onClick={handleExportPDF} disabled={!activeGroup || expenses.length === 0}
+              className="btn-secondary text-sm px-4 py-2 flex items-center gap-1.5 disabled:opacity-40">
+              📄 Export PDF
+            </button>
+            <Link to="/expenses/add" className="btn-primary text-sm px-4 py-2 text-center">+ Add</Link>
+          </div>
         </div>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}

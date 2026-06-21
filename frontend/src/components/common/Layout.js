@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Avatar } from './index';
+import NotificationBell from './NotificationBell';
 
 const NAV = [
   {
@@ -137,6 +138,14 @@ const Layout = ({ children }) => {
           {!compact && <span>{isDark ? 'Light mode' : 'Dark mode'}</span>}
         </button>
 
+        {/* Notification bell — sidebar */}
+        {!compact && (
+          <div className="flex items-center justify-between px-1">
+            <NotificationBell />
+          </div>
+        )}
+        {compact && <NotificationBell />}
+
         {/* User profile card */}
         {!compact && (
           <Link to="/profile"
@@ -150,7 +159,6 @@ const Layout = ({ children }) => {
               <p className="text-[11px] truncate mt-0.5" style={{ color: mutedText }}>@{user?.username}</p>
               {user?.email && <p className="text-[10px] truncate mt-0.5" style={{ color: mutedText }}>{user.email}</p>}
             </div>
-
           </Link>
         )}
         {compact && <Avatar name={user?.name} size="sm" />}
@@ -217,7 +225,10 @@ const Layout = ({ children }) => {
           </div>
           <span className="font-bold text-sm tracking-tight" style={{ color: labelText }}>FlatSplit</span>
         </div>
-        <Avatar name={user?.name} size="sm" />
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <Avatar name={user?.name} size="sm" />
+        </div>
       </header>
 
       {/* ── Main content ── */}

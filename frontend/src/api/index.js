@@ -49,12 +49,13 @@ export const groupAPI = {
 
 // Expenses
 export const expenseAPI = {
-  create: (data) => API.post('/expenses', data),
-  getByGroup: (groupId, params) => API.get(`/expenses/group/${groupId}`, { params }),
-  getBalances: (groupId) => API.get(`/expenses/group/${groupId}/balances`),
-  getById: (id) => API.get(`/expenses/${id}`),
-  update: (id, data) => API.put(`/expenses/${id}`, data),
-  delete: (id) => API.delete(`/expenses/${id}`),
+  create:     (data)             => API.post('/expenses', data),
+  getByGroup: (groupId, params)  => API.get(`/expenses/group/${groupId}`, { params }),
+  getBalances:(groupId)          => API.get(`/expenses/group/${groupId}/balances`),
+  getById:    (id)               => API.get(`/expenses/${id}`),
+  update:     (id, data)         => API.put(`/expenses/${id}`, data),
+  delete:     (id)               => API.delete(`/expenses/${id}`),
+  exportData: (groupId, params)  => API.get(`/expenses/group/${groupId}/export`, { params }),
 };
 
 // Settlements
@@ -76,6 +77,21 @@ export const settlementAPI = {
 export const reportAPI = {
   getMonthlyReport: (groupId, params) => API.get(`/reports/group/${groupId}`, { params }),
   getSummary: (groupId) => API.get(`/reports/group/${groupId}/summary`),
+};
+
+// Notifications
+export const notificationAPI = {
+  getAll:      ()   => API.get('/notifications'),
+  markRead:    (id) => API.put(`/notifications/${id}/read`),
+  markAllRead: ()   => API.put('/notifications/read-all/all'),
+  delete:      (id) => API.delete(`/notifications/${id}`),
+};
+
+// Budgets
+export const budgetAPI = {
+  getByGroup: (groupId, params) => API.get(`/budgets/group/${groupId}`, { params }),
+  create:     (groupId, data)   => API.post(`/budgets/group/${groupId}`, data),
+  delete:     (id)              => API.delete(`/budgets/${id}`),
 };
 
 export default API;

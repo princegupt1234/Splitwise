@@ -4,6 +4,8 @@ const { protect } = require('../middleware/auth');
 const Expense = require('../models/Expense');
 const Group = require('../models/Group');
 const { calculateBalances, generateSettlements } = require('../services/settlementService');
+const { checkBudgetOnExpense } = require('./budgets');
+const { createNotification } = require('../services/notificationService');
 
 // Helper: verify group membership
 const verifyMembership = async (groupId, userId) => {
@@ -44,6 +46,24 @@ router.post('/', protect, async (req, res, next) => {
     await expense.populate('splitAmong', 'name username');
     await expense.populate('createdBy', 'name username');
 
+    // notify other group members
+    const grpForNotif = await Group.findById(groupId);
+    if (grpForNotif) {
+      const othersIds = grpForNotif.members.filter((m) => m.toString() !== req.user._id.toString());
+      await Promise.all(othersIds.map((uid) =>
+        createNotification(uid, {
+          type: 'expense_added',
+          title: `New expense in ${grpForNotif.name}`,
+          message: `${req.user.name} added "${title.trim()}" — ₹${parseFloat(amount)}`,
+          link: '/expenses',
+          meta: { groupId, expenseId: expense._id },
+        })
+      ));
+    }
+
+    // check budget limits
+    checkBudgetOnExpense(expense).catch(() => {});
+
     res.status(201).json({ success: true, expense });
   } catch (error) {
     next(error);
@@ -82,6 +102,31 @@ router.get('/group/:groupId', protect, async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+// @route  GET /api/expenses/group/:groupId/export-pdf
+// @desc   Return expense data for PDF (used by frontend jsPDF)
+// @access Private
+router.get('/group/:groupId/export', protect, async (req, res, next) => {
+  try {
+    const { error, status } = await verifyMembership(req.params.groupId, req.user._id);
+    if (error) return res.status(status).json({ success: false, message: error });
+
+    const { month, year, category } = req.query;
+    const filter = { groupId: req.params.groupId };
+    if (month && year) {
+      filter.date = { $gte: new Date(year, month - 1, 1), $lte: new Date(year, month, 0, 23, 59, 59) };
+    }
+    if (category) filter.category = category;
+
+    const expenses = await Expense.find(filter)
+      .populate('paidBy', 'name')
+      .populate('splitAmong', 'name')
+      .sort({ date: -1 });
+
+    const group = await Group.findById(req.params.groupId);
+    res.json({ success: true, expenses, groupName: group?.name });
+  } catch (err) { next(err); }
 });
 
 // @route  GET /api/expenses/group/:groupId/balances

@@ -5,7 +5,10 @@ const Settlement = require('../models/Settlement');
 const SettlementRequest = require('../models/SettlementRequest');
 const Expense = require('../models/Expense');
 const Group = require('../models/Group');
+const User = require('../models/User');
 const { calculateBalances, generateSettlements } = require('../services/settlementService');
+const { createNotification } = require('../services/notificationService');
+const { sendSettlementRequest, sendSettlementApproved, sendSettlementRejected } = require('../services/emailService');
 
 // ─────────────────────────────────────────────────────────────
 // EXISTING ROUTES (unchanged)
@@ -175,6 +178,25 @@ router.post('/:id/request', protect, async (req, res, next) => {
 
     await request.populate('sender', 'name username');
     await request.populate('receiver', 'name username');
+
+    // notify receiver
+    const group = await Group.findById(settlement.groupId);
+    const receiver = await User.findById(settlement.to._id);
+    await createNotification(settlement.to._id, {
+      type: 'settlement_request',
+      title: `Payment request from ${req.user.name}`,
+      message: `${req.user.name} sent a payment of ₹${Number(amount)} in ${group?.name}`,
+      link: '/settlements',
+      meta: { settlementId: settlement._id, amount: Number(amount) },
+    });
+    if (receiver?.email) {
+      sendSettlementRequest(receiver.email, {
+        senderName: req.user.name,
+        amount: Number(amount),
+        groupName: group?.name,
+      });
+    }
+
     res.status(201).json({ success: true, message: 'Payment request sent', request });
   } catch (error) { next(error); }
 });
@@ -262,6 +284,24 @@ router.put('/requests/:requestId/approve', protect, async (req, res, next) => {
     await settlement.populate('from', 'name username');
     await settlement.populate('to', 'name username');
 
+    // notify sender
+    const senderUser = await User.findById(request.sender._id);
+    const grp = await Group.findById(request.groupId);
+    await createNotification(request.sender._id, {
+      type: 'settlement_approved',
+      title: `Payment confirmed by ${req.user.name}`,
+      message: `₹${request.amount} payment approved in ${grp?.name}`,
+      link: '/settlements',
+      meta: { settlementId: settlement._id, amount: request.amount },
+    });
+    if (senderUser?.email) {
+      sendSettlementApproved(senderUser.email, {
+        receiverName: req.user.name,
+        amount: request.amount,
+        groupName: grp?.name,
+      });
+    }
+
     res.json({ success: true, message: 'Payment approved', request, settlement });
   } catch (error) { next(error); }
 });
@@ -287,6 +327,25 @@ router.put('/requests/:requestId/reject', protect, async (req, res, next) => {
     request.rejectedBy = req.user._id;
     request.rejectionReason = req.body.reason || '';
     await request.save();
+
+    // notify sender
+    const senderUser2 = await User.findById(request.sender._id);
+    const grp2 = await Group.findById(request.groupId);
+    await createNotification(request.sender._id, {
+      type: 'settlement_rejected',
+      title: `Payment rejected by ${req.user.name}`,
+      message: `₹${request.amount} payment request was rejected in ${grp2?.name}`,
+      link: '/settlements',
+      meta: { settlementId: request.settlementId, amount: request.amount, reason: req.body.reason },
+    });
+    if (senderUser2?.email) {
+      sendSettlementRejected(senderUser2.email, {
+        receiverName: req.user.name,
+        amount: request.amount,
+        groupName: grp2?.name,
+        reason: req.body.reason,
+      });
+    }
 
     res.json({ success: true, message: 'Payment request rejected', request });
   } catch (error) { next(error); }

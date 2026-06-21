@@ -108,6 +108,10 @@ router.post(
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
 
+      if (user.isBanned) {
+        return res.status(403).json({ success: false, message: 'Your account has been suspended. Contact support.' });
+      }
+
       const token = generateToken(user._id);
 
       res.json({

@@ -15,7 +15,10 @@ export const AuthProvider = ({ children }) => {
       // Verify token is still valid
       authAPI.getMe()
         .then((res) => setUser(res.data.user))
-        .catch(() => logout())
+        .catch((err) => {
+          // Only logout on 401 (invalid token), not on network errors
+          if (err.response?.status === 401) logout();
+        })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);

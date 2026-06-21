@@ -5,6 +5,7 @@ import { Alert, Spinner, Avatar, Modal } from '../components/common';
 import Layout from '../components/common/Layout';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import BudgetManager from '../components/common/BudgetManager';
 
 // ─────────────────────────────────────────
 // Create Group Page
@@ -286,6 +287,12 @@ export const GroupDetail = () => {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Budget Manager */}
+        <div className="card p-5">
+          <h2 className="font-semibold text-theme-primary mb-4">📊 Monthly Budgets</h2>
+          <BudgetManager groupId={group?._id} groupName={group?.name} />
         </div>
 
         {/* Quick links */}
