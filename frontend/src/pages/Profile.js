@@ -180,10 +180,6 @@ const Profile = () => {
     ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
     : null;
 
-  const lastLogin = user?.lastLogin
-    ? new Date(user.lastLogin).toLocaleString()
-    : null;
-
   const totalGroups = stats?.groups || 0;
 
   const profileCompletion = (() => {
@@ -274,7 +270,6 @@ const Profile = () => {
             </Card>
           </div>
         )}
-
 
         {/* ── Financial Summary ───────────────────────── */}
         <div>
@@ -466,7 +461,7 @@ const Profile = () => {
               <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg,#4f56e8,#6574f3)' }}>F</div>
               <div>
                 <p className="text-sm font-semibold" style={{ color: 'var(--text-base)' }}>FlatSplit</p>
-                <p className="text-xs" style={{ color: '#3a3d50' }}>Version 1.0.0</p>
+                <p className="text-xs" style={{ color: '#3a3d50' }}>Version 1.1.0</p>
                 <p className="text-xs mt-1" style={{ color: '#6b7280' }}>Manage shared expenses, settlements, and flat finances in one place.</p>
               </div>
             </div>
