@@ -1,7 +1,15 @@
 import axios from 'axios';
 
+const getBaseURL = () => {
+  if (process.env.REACT_APP_API_URL) return process.env.REACT_APP_API_URL;
+  if (window.location.hostname !== 'localhost') {
+    return 'https://splitwise-production-1549.up.railway.app/api';
+  }
+  return 'http://localhost:5000/api';
+};
+
 const ADMIN_API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',
+  baseURL: getBaseURL(),
 });
 
 ADMIN_API.interceptors.request.use((config) => {

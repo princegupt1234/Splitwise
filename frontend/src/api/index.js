@@ -1,7 +1,18 @@
 import axios from 'axios';
 
+const getBaseURL = () => {
+  // Explicitly set in env (Vercel dashboard)
+  if (process.env.REACT_APP_API_URL) return process.env.REACT_APP_API_URL;
+  // Running on Vercel production/preview — call Railway directly
+  if (window.location.hostname !== 'localhost') {
+    return 'https://splitwise-production-1549.up.railway.app/api';
+  }
+  // Local dev
+  return 'http://localhost:5000/api';
+};
+
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',
+  baseURL: getBaseURL(),
 });
 
 // Add JWT token to every request
