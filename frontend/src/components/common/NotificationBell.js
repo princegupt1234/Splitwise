@@ -15,7 +15,7 @@ const NotificationBell = () => {
   const [notifs, setNotifs]       = useState([]);
   const [unread, setUnread]       = useState(0);
   const [open, setOpen]           = useState(false);
-  const [loading, setLoading]     = useState(false);
+  const [loading, setLoading]     = useState(false); // eslint-disable-line no-unused-vars
   const ref                       = useRef(null);
   const navigate                  = useNavigate();
 

@@ -160,8 +160,8 @@ const Dashboard = () => {
 
   if (loading) return <PageLoader />;
 
+  // eslint-disable-next-line no-unused-vars
   const isGroupAdmin    = activeGroup && ((activeGroup.createdBy?._id?.toString?.() || activeGroup.createdBy?.toString?.()) === user?._id?.toString());
-  const activeGroupRole = isGroupAdmin ? 'Admin' : 'Member';
   const bal             = summary?.myBalance ?? 0;
   const balZero         = bal === 0;
   const balPositive     = bal >= 0;

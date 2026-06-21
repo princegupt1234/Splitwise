@@ -180,9 +180,7 @@ const Profile = () => {
     ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
     : null;
 
-  const lastLogin = user?.lastLogin
-    ? new Date(user.lastLogin).toLocaleString()
-    : null;
+
 
   const totalGroups = stats?.groups || 0;
 
