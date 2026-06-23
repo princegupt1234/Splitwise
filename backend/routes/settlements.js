@@ -105,7 +105,6 @@ router.put('/:id/settle', protect, async (req, res, next) => {
     await settlement.populate('to', 'name username');
 
     // notify both parties
-    const group = await Group.findById(settlement.groupId);
     await createNotification(settlement.from._id, {
       type: 'settlement_settled',
       title: 'Settlement marked as settled',
