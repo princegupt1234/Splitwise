@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({
+// Create transporter lazily so env vars are always read at send time
+const getTransporter = () => nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
   secure: false,
@@ -10,17 +11,21 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const BASE = process.env.FRONTEND_URL || 'http://localhost:3000';
+const BASE = () => process.env.FRONTEND_URL || 'http://localhost:3000';
 
 const send = async (to, subject, html) => {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return; // skip if not configured
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.log('Email skipped: SMTP not configured');
+    return;
+  }
   try {
-    await transporter.sendMail({
+    await getTransporter().sendMail({
       from: `"FlatSplit" <${process.env.SMTP_USER}>`,
       to,
       subject,
       html,
     });
+    console.log(`Email sent to ${to}: ${subject}`);
   } catch (err) {
     console.error('Email send error:', err.message);
   }
@@ -33,9 +38,19 @@ const wrap = (body) => `
     </div>
     <div style="padding:28px;">${body}</div>
     <div style="padding:16px 28px;border-top:1px solid rgba(255,255,255,0.07);font-size:11px;color:#4a4d5e;">
-      You're receiving this because you're a FlatSplit member. <a href="${BASE}" style="color:#6574f3;">Open App</a>
+      You're receiving this because you're a FlatSplit member. <a href="${BASE()}" style="color:#6574f3;">Open App</a>
     </div>
   </div>`;
+
+exports.sendExpenseAdded = (toEmail, { memberName, addedBy, expenseTitle, amount, groupName }) =>
+  send(toEmail, `🧾 New expense in ${groupName}`,
+    wrap(`<h2 style="margin:0 0 12px;color:#fff;">New Expense Added</h2>
+      <p style="color:#a0a3b1;margin:0 0 20px;">Hi <strong style="color:#fff">${memberName}</strong>, <strong style="color:#fff">${addedBy}</strong> added a new expense in <strong style="color:#fff">${groupName}</strong>.</p>
+      <div style="background:rgba(101,116,243,0.12);border:1px solid rgba(101,116,243,0.25);border-radius:12px;padding:16px 20px;margin-bottom:20px;">
+        <p style="margin:0;font-size:13px;color:#8196f8;">${expenseTitle}</p>
+        <p style="margin:6px 0 0;font-size:28px;font-weight:700;color:#fff;">₹${amount}</p>
+      </div>
+      <a href="${BASE()}/expenses" style="display:inline-block;background:linear-gradient(135deg,#4f56e8,#6574f3);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Expenses →</a>`));
 
 exports.sendSettlementRequest = (toEmail, { senderName, amount, groupName }) =>
   send(toEmail, `💸 Payment request from ${senderName}`,
@@ -45,7 +60,7 @@ exports.sendSettlementRequest = (toEmail, { senderName, amount, groupName }) =>
         <p style="margin:0;font-size:13px;color:#8196f8;">Amount Requested</p>
         <p style="margin:4px 0 0;font-size:28px;font-weight:700;color:#fff;">₹${amount}</p>
       </div>
-      <a href="${BASE}/settlements" style="display:inline-block;background:linear-gradient(135deg,#4f56e8,#6574f3);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">Review Request →</a>`));
+      <a href="${BASE()}/settlements" style="display:inline-block;background:linear-gradient(135deg,#4f56e8,#6574f3);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">Review Request →</a>`));
 
 exports.sendSettlementApproved = (toEmail, { receiverName, amount, groupName }) =>
   send(toEmail, `✅ Payment confirmed by ${receiverName}`,
@@ -55,14 +70,14 @@ exports.sendSettlementApproved = (toEmail, { receiverName, amount, groupName }) 
         <p style="margin:0;font-size:28px;">✅</p>
         <p style="margin:6px 0 0;font-size:16px;font-weight:700;color:#10b981;">₹${amount} Settled</p>
       </div>
-      <a href="${BASE}/settlements" style="display:inline-block;background:linear-gradient(135deg,#059669,#10b981);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Settlements →</a>`));
+      <a href="${BASE()}/settlements" style="display:inline-block;background:linear-gradient(135deg,#059669,#10b981);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Settlements →</a>`));
 
 exports.sendSettlementRejected = (toEmail, { receiverName, amount, groupName, reason }) =>
   send(toEmail, `❌ Payment request rejected`,
     wrap(`<h2 style="margin:0 0 12px;color:#fff;">Payment Rejected</h2>
       <p style="color:#a0a3b1;margin:0 0 20px;"><strong style="color:#fff">${receiverName}</strong> rejected your payment request of <strong style="color:#ef4444">₹${amount}</strong> in <strong style="color:#fff">${groupName}</strong>.</p>
       ${reason ? `<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:12px 16px;margin-bottom:20px;"><p style="margin:0;font-size:13px;color:#f87171;">Reason: ${reason}</p></div>` : ''}
-      <a href="${BASE}/settlements" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Settlements →</a>`));
+      <a href="${BASE()}/settlements" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Settlements →</a>`));
 
 exports.sendMonthlyReport = (toEmail, { userName, groupName, month, year, totalExpense, myPaid, myShare, myBalance, categoryWise, memberWise }) => {
   const monthName = new Date(year, month - 1, 1).toLocaleString('en-US', { month: 'long' });
