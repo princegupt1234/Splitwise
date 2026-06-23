@@ -51,8 +51,8 @@ app.get('/api/test-email', async (req, res) => {
   const nodemailer = require('nodemailer');
   const cfg = {
     host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false,
+    port: 465,
+    secure: true,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     tls: { rejectUnauthorized: false },
   };
