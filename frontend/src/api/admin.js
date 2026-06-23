@@ -31,18 +31,19 @@ ADMIN_API.interceptors.response.use(
 );
 
 export const adminAPI = {
-  login:          (data)              => ADMIN_API.post('/admin/login', data),
-  getStats:       ()                  => ADMIN_API.get('/admin/stats'),
-  getUsers:       (params)            => ADMIN_API.get('/admin/users', { params }),
-  getUser:        (id)                => ADMIN_API.get(`/admin/users/${id}`),
-  updateUser:     (id, data)          => ADMIN_API.put(`/admin/users/${id}`, data),
-  deleteUser:     (id)                => ADMIN_API.delete(`/admin/users/${id}`),
-  banUser:        (id)                => ADMIN_API.put(`/admin/users/${id}/ban`),
-  unbanUser:      (id)                => ADMIN_API.put(`/admin/users/${id}/unban`),
-  getGroups:      (params)            => ADMIN_API.get('/admin/groups', { params }),
-  deleteGroup:    (id)                => ADMIN_API.delete(`/admin/groups/${id}`),
-  getExpenses:    (params)            => ADMIN_API.get('/admin/expenses', { params }),
-  deleteExpense:  (id)                => ADMIN_API.delete(`/admin/expenses/${id}`),
+  login:           (data)   => ADMIN_API.post('/admin/login', data),
+  getStats:        ()       => ADMIN_API.get('/admin/stats'),
+  getDetailedStats:()       => ADMIN_API.get('/admin/stats/detailed'),
+  getUsers:        (params) => ADMIN_API.get('/admin/users', { params }),
+  getUser:         (id)     => ADMIN_API.get(`/admin/users/${id}`),
+  updateUser:      (id, data) => ADMIN_API.put(`/admin/users/${id}`, data),
+  deleteUser:      (id)     => ADMIN_API.delete(`/admin/users/${id}`),
+  banUser:         (id)     => ADMIN_API.put(`/admin/users/${id}/ban`),
+  unbanUser:       (id)     => ADMIN_API.put(`/admin/users/${id}/unban`),
+  getGroups:       (params) => ADMIN_API.get('/admin/groups', { params }),
+  deleteGroup:     (id)     => ADMIN_API.delete(`/admin/groups/${id}`),
+  getExpenses:     (params) => ADMIN_API.get('/admin/expenses', { params }),
+  deleteExpense:   (id)     => ADMIN_API.delete(`/admin/expenses/${id}`),
 };
 
 export default ADMIN_API;

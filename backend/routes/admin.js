@@ -51,6 +51,82 @@ router.get('/stats', adminAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── GET /api/admin/stats/detailed ────────────────────────────
+router.get('/stats/detailed', adminAuth, async (req, res, next) => {
+  try {
+    const now = new Date();
+    const startOfToday    = new Date(now.setHours(0, 0, 0, 0));
+    const startOfMonth    = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth  = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+    const [
+      totalUsers, totalGroups, totalExpenses, totalSettlements, bannedUsers,
+      newUsersToday, newUsersThisMonth, newUsersLastMonth,
+      expensesThisMonth, expensesLastMonth,
+      pendingSettlements, settledSettlements,
+      recentUsers, recentExpenses,
+    ] = await Promise.all([
+      User.countDocuments({ role: 'user' }),
+      Group.countDocuments(),
+      Expense.countDocuments(),
+      Settlement.countDocuments(),
+      User.countDocuments({ isBanned: true }),
+      User.countDocuments({ createdAt: { $gte: startOfToday }, role: 'user' }),
+      User.countDocuments({ createdAt: { $gte: startOfMonth }, role: 'user' }),
+      User.countDocuments({ createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }, role: 'user' }),
+      Expense.countDocuments({ createdAt: { $gte: startOfMonth } }),
+      Expense.countDocuments({ createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth } }),
+      Settlement.countDocuments({ status: 'pending' }),
+      Settlement.countDocuments({ status: 'settled' }),
+      User.find({ role: 'user' }).sort({ createdAt: -1 }).limit(5).select('name username email createdAt isBanned'),
+      Expense.find().sort({ createdAt: -1 }).limit(5)
+        .populate('paidBy', 'name username')
+        .populate('groupId', 'name'),
+    ]);
+
+    const expenseAgg      = await Expense.aggregate([{ $group: { _id: null, total: { $sum: '$amount' } } }]);
+    const monthlyAgg      = await Expense.aggregate([
+      { $match: { createdAt: { $gte: startOfMonth } } },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]);
+    const totalAmount     = expenseAgg[0]?.total || 0;
+    const monthlyAmount   = monthlyAgg[0]?.total || 0;
+
+    // Top 5 groups by member count
+    const topGroups = await Group.find()
+      .populate('createdBy', 'name username')
+      .sort({ 'members': -1 })
+      .limit(5)
+      .select('name code members createdAt createdBy');
+
+    // Last 6 months user growth
+    const userGrowth = await Promise.all(
+      Array.from({ length: 6 }, (_, i) => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const start = new Date(d.getFullYear(), d.getMonth(), 1);
+        const end   = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+        return User.countDocuments({ createdAt: { $gte: start, $lte: end }, role: 'user' })
+          .then(count => ({ month: start.toLocaleString('en-US', { month: 'short' }), count }));
+      })
+    );
+
+    res.json({
+      success: true,
+      stats: {
+        totalUsers, totalGroups, totalExpenses, totalSettlements, bannedUsers,
+        newUsersToday, newUsersThisMonth, newUsersLastMonth,
+        expensesThisMonth, expensesLastMonth,
+        pendingSettlements, settledSettlements,
+        totalAmount, monthlyAmount,
+        recentUsers, recentExpenses,
+        topGroups, userGrowth: userGrowth.reverse(),
+      },
+    });
+  } catch (err) { next(err); }
+});
+
 // ── GET /api/admin/users ─────────────────────────────────────
 router.get('/users', adminAuth, async (req, res, next) => {
   try {
