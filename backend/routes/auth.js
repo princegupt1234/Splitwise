@@ -4,11 +4,12 @@ const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
+const { sendOTP } = require('../services/emailService');
 
-// Generate JWT Token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '7d' });
-};
+// In-memory OTP store: { email -> { otp, expiresAt } }
+const otpStore = new Map();
+
+const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '7d' });
 
 // @route  POST /api/auth/register
 // @desc   Register a new user
@@ -167,6 +168,67 @@ router.put('/profile', protect, async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+// @route  POST /api/auth/forgot-password
+// @desc   Send OTP to email
+// @access Public
+router.post('/forgot-password', async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ success: false, message: 'No account found with this email' });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore.set(email.toLowerCase(), { otp, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min
+    await sendOTP(email.toLowerCase(), { name: user.name, otp });
+    res.json({ success: true, message: 'OTP sent to your email' });
+  } catch (err) { next(err); }
+});
+
+// @route  POST /api/auth/verify-otp
+// @desc   Verify OTP
+// @access Public
+router.post('/verify-otp', async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ success: false, message: 'Email and OTP are required' });
+    const record = otpStore.get(email.toLowerCase());
+    if (!record) return res.status(400).json({ success: false, message: 'OTP not found. Please request a new one' });
+    if (Date.now() > record.expiresAt) {
+      otpStore.delete(email.toLowerCase());
+      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one' });
+    }
+    if (record.otp !== otp.toString()) return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    // Mark OTP as verified (keep in store for reset step)
+    otpStore.set(email.toLowerCase(), { ...record, verified: true });
+    res.json({ success: true, message: 'OTP verified' });
+  } catch (err) { next(err); }
+});
+
+// @route  POST /api/auth/reset-password
+// @desc   Reset password after OTP verified
+// @access Public
+router.post('/reset-password', async (req, res, next) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) return res.status(400).json({ success: false, message: 'All fields required' });
+    const record = otpStore.get(email.toLowerCase());
+    if (!record || !record.verified || record.otp !== otp.toString()) {
+      return res.status(400).json({ success: false, message: 'Invalid or unverified OTP' });
+    }
+    if (Date.now() > record.expiresAt) {
+      otpStore.delete(email.toLowerCase());
+      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one' });
+    }
+    if (newPassword.length < 6) return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    user.password = newPassword;
+    await user.save();
+    otpStore.delete(email.toLowerCase());
+    res.json({ success: true, message: 'Password reset successfully. You can now log in.' });
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

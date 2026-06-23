@@ -42,6 +42,16 @@ const wrap = (body) => `
     </div>
   </div>`;
 
+exports.sendOTP = (toEmail, { name, otp }) =>
+  send(toEmail, `🔐 Your FlatSplit password reset OTP`,
+    wrap(`<h2 style="margin:0 0 12px;color:#fff;">Password Reset</h2>
+      <p style="color:#a0a3b1;margin:0 0 20px;">Hi <strong style="color:#fff">${name}</strong>, use the OTP below to reset your password. It expires in <strong style="color:#fff">10 minutes</strong>.</p>
+      <div style="background:rgba(101,116,243,0.12);border:1px solid rgba(101,116,243,0.25);border-radius:12px;padding:24px 20px;margin-bottom:20px;text-align:center;">
+        <p style="margin:0;font-size:13px;color:#8196f8;">Your OTP</p>
+        <p style="margin:8px 0 0;font-size:40px;font-weight:800;color:#fff;letter-spacing:12px;">${otp}</p>
+      </div>
+      <p style="color:#4a4d5e;font-size:12px;margin:0;">If you didn't request this, ignore this email. Your password won't change.</p>`));
+
 exports.sendExpenseAdded = (toEmail, { memberName, addedBy, expenseTitle, amount, groupName }) =>
   send(toEmail, `🧾 New expense in ${groupName}`,
     wrap(`<h2 style="margin:0 0 12px;color:#fff;">New Expense Added</h2>

@@ -7,7 +7,6 @@ const User = require('../models/User');
 const { calculateBalances, generateSettlements } = require('../services/settlementService');
 const { checkBudgetOnExpense } = require('./budgets');
 const { createNotification } = require('../services/notificationService');
-const { sendExpenseAdded } = require('../services/emailService');
 
 // Helper: verify group membership
 const verifyMembership = async (groupId, userId) => {
@@ -61,17 +60,6 @@ router.post('/', protect, async (req, res, next) => {
           meta: { groupId, expenseId: expense._id },
         })
       ));
-      // send email to other members
-      const otherUsers = await User.find({ _id: { $in: othersIds }, email: { $exists: true, $ne: '' } });
-      otherUsers.forEach((u) => {
-        sendExpenseAdded(u.email, {
-          memberName: u.name,
-          addedBy: req.user.name,
-          expenseTitle: title.trim(),
-          amount: parseFloat(amount),
-          groupName: grpForNotif.name,
-        }).catch(() => {});
-      });
     }
 
     // check budget limits
