@@ -46,6 +46,33 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Flat Expense Manager API is running 🏠' });
 });
 
+// Temp SMTP test — remove after testing
+app.get('/api/test-email', async (req, res) => {
+  const nodemailer = require('nodemailer');
+  const cfg = {
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    tls: { rejectUnauthorized: false },
+  };
+  console.log('SMTP config:', { host: cfg.host, port: cfg.port, user: cfg.auth.user, passLen: cfg.auth.pass?.length });
+  try {
+    const t = nodemailer.createTransport(cfg);
+    await t.verify();
+    await t.sendMail({
+      from: `"FlatSplit Test" <${process.env.SMTP_USER}>`,
+      to: process.env.SMTP_USER,
+      subject: '✅ FlatSplit SMTP Test',
+      text: 'If you see this, email is working correctly!',
+    });
+    res.json({ success: true, message: `Test email sent to ${process.env.SMTP_USER}` });
+  } catch (err) {
+    console.error('SMTP test error:', err);
+    res.status(500).json({ success: false, error: err.message, code: err.code });
+  }
+});
+
 // Routes
 app.use('/api/auth',          authRoutes);
 app.use('/api/groups',        groupRoutes);
