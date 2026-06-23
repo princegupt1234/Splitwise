@@ -6,6 +6,7 @@ import { formatCurrency } from '../utils/helpers';
 import { PageLoader, EmptyState, Spinner } from '../components/common';
 import Layout from '../components/common/Layout';
 import SettlementDetailsModal from '../components/common/SettlementDetailsModal';
+import NotificationBell from '../components/common/NotificationBell';
 import { useToast } from '../context/ToastContext';
 
 /* ── tiny UI primitives ─────────────────────────────────── */
@@ -193,6 +194,7 @@ const Dashboard = () => {
             <p className="dash-subtitle">Here's what's happening with your expenses today.</p>
           </div>
           <div className="dash-header-actions">
+            <NotificationBell />
             <button
               onClick={handleSync}
               disabled={syncing || !activeGroup}
