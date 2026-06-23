@@ -32,7 +32,6 @@ app.use(cors({
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     if (origin.endsWith('.vercel.app')) return callback(null, true);
-    // Allow LAN access (e.g. mobile on same Wi-Fi)
     if (/^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(origin)) return callback(null, true);
     callback(new Error(`CORS: origin ${origin} not allowed`));
   },
@@ -43,34 +42,34 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'Flat Expense Manager API is running 🏠' });
+  res.json({ success: true, message: 'Flat Expense Manager API is running' });
 });
 
-// Temp SMTP test — remove after testing
+// Temp SMTP test - remove after testing
 app.get('/api/test-email', async (req, res) => {
   const nodemailer = require('nodemailer');
-  const cfg = {
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    family: 4,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    tls: { rejectUnauthorized: false },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-  };
-  console.log('SMTP config:', { host: cfg.host, port: cfg.port, user: cfg.auth.user, passLen: cfg.auth.pass?.length });
+  const dns = require('dns').promises;
   try {
-    const t = nodemailer.createTransport(cfg);
+    const addresses = await dns.resolve4('smtp.gmail.com');
+    console.log('Resolved smtp.gmail.com to IPv4:', addresses);
+    const t = nodemailer.createTransport({
+      host: addresses[0],
+      port: 465,
+      secure: true,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      tls: { rejectUnauthorized: false, servername: 'smtp.gmail.com' },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 15000,
+    });
     await t.verify();
     await t.sendMail({
       from: `"FlatSplit Test" <${process.env.SMTP_USER}>`,
       to: process.env.SMTP_USER,
-      subject: '✅ FlatSplit SMTP Test',
+      subject: 'FlatSplit SMTP Test',
       text: 'If you see this, email is working correctly!',
     });
-    res.json({ success: true, message: `Test email sent to ${process.env.SMTP_USER}` });
+    res.json({ success: true, message: `Test email sent to ${process.env.SMTP_USER}`, ip: addresses[0] });
   } catch (err) {
     console.error('SMTP test error:', err.message, err.code);
     res.status(500).json({ success: false, error: err.message, code: err.code });
@@ -97,6 +96,6 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
   startScheduler();
 });
