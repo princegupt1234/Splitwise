@@ -138,14 +138,6 @@ const Layout = ({ children }) => {
           {!compact && <span>{isDark ? 'Light mode' : 'Dark mode'}</span>}
         </button>
 
-        {/* Notification bell — sidebar */}
-        {!compact && (
-          <div className="flex items-center justify-between px-1">
-            <NotificationBell />
-          </div>
-        )}
-        {compact && <NotificationBell />}
-
         {/* User profile card */}
         {!compact && (
           <Link to="/profile"
