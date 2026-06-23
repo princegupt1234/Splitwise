@@ -1,40 +1,19 @@
-const nodemailer = require('nodemailer');
-const dns = require('dns').promises;
+const { Resend } = require('resend');
+
+const getClient = () => new Resend(process.env.RESEND_API_KEY);
 
 const BASE = () => process.env.FRONTEND_URL || 'http://localhost:3000';
-
-// Resolve smtp.gmail.com to IPv4 and create transporter
-const getTransporter = async () => {
-  const addresses = await dns.resolve4('smtp.gmail.com');
-  return nodemailer.createTransport({
-    host: addresses[0],
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    tls: { rejectUnauthorized: false, servername: 'smtp.gmail.com' },
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 15000,
-  });
-};
+const FROM = () => process.env.RESEND_FROM || 'FlatSplit <onboarding@resend.dev>';
 
 const send = async (to, subject, html) => {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.log('Email skipped: SMTP not configured');
+  if (!process.env.RESEND_API_KEY) {
+    console.log('Email skipped: RESEND_API_KEY not configured');
     return;
   }
   try {
-    const transporter = await getTransporter();
-    await transporter.sendMail({
-      from: `"FlatSplit" <${process.env.SMTP_USER}>`,
-      to,
-      subject,
-      html,
-    });
-    console.log(`Email sent to ${to}: ${subject}`);
+    const { data, error } = await getClient().emails.send({ from: FROM(), to, subject, html });
+    if (error) { console.error('Email send error:', error); return; }
+    console.log(`Email sent to ${to} | id: ${data?.id}`);
   } catch (err) {
     console.error('Email send error:', err.message);
   }
@@ -59,17 +38,7 @@ exports.sendOTP = (toEmail, { name, otp }) =>
         <p style="margin:0;font-size:13px;color:#8196f8;">Your OTP</p>
         <p style="margin:8px 0 0;font-size:40px;font-weight:800;color:#fff;letter-spacing:12px;">${otp}</p>
       </div>
-      <p style="color:#4a4d5e;font-size:12px;margin:0;">If you didn't request this, ignore this email. Your password won't change.</p>`));
-
-exports.sendExpenseAdded = (toEmail, { memberName, addedBy, expenseTitle, amount, groupName }) =>
-  send(toEmail, `New expense in ${groupName}`,
-    wrap(`<h2 style="margin:0 0 12px;color:#fff;">New Expense Added</h2>
-      <p style="color:#a0a3b1;margin:0 0 20px;">Hi <strong style="color:#fff">${memberName}</strong>, <strong style="color:#fff">${addedBy}</strong> added a new expense in <strong style="color:#fff">${groupName}</strong>.</p>
-      <div style="background:rgba(101,116,243,0.12);border:1px solid rgba(101,116,243,0.25);border-radius:12px;padding:16px 20px;margin-bottom:20px;">
-        <p style="margin:0;font-size:13px;color:#8196f8;">${expenseTitle}</p>
-        <p style="margin:6px 0 0;font-size:28px;font-weight:700;color:#fff;">&#8377;${amount}</p>
-      </div>
-      <a href="${BASE()}/expenses" style="display:inline-block;background:linear-gradient(135deg,#4f56e8,#6574f3);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Expenses</a>`));
+      <p style="color:#4a4d5e;font-size:12px;margin:0;">If you didn't request this, ignore this email.</p>`));
 
 exports.sendSettlementRequest = (toEmail, { senderName, amount, groupName }) =>
   send(toEmail, `Payment request from ${senderName}`,
@@ -86,7 +55,6 @@ exports.sendSettlementApproved = (toEmail, { receiverName, amount, groupName }) 
     wrap(`<h2 style="margin:0 0 12px;color:#fff;">Payment Approved!</h2>
       <p style="color:#a0a3b1;margin:0 0 20px;"><strong style="color:#fff">${receiverName}</strong> confirmed your payment of <strong style="color:#10b981">&#8377;${amount}</strong> in <strong style="color:#fff">${groupName}</strong>.</p>
       <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:center;">
-        <p style="margin:0;font-size:28px;">&#10003;</p>
         <p style="margin:6px 0 0;font-size:16px;font-weight:700;color:#10b981;">&#8377;${amount} Settled</p>
       </div>
       <a href="${BASE()}/settlements" style="display:inline-block;background:linear-gradient(135deg,#059669,#10b981);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Settlements</a>`));
@@ -116,8 +84,8 @@ exports.sendMonthlyReport = (toEmail, { userName, groupName, month, year, totalE
         <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:14px;text-align:center;"><p style="margin:0;font-size:11px;color:#fcd34d;">Your Share</p><p style="margin:4px 0 0;font-size:22px;font-weight:700;color:#f59e0b;">&#8377;${myShare}</p></div>
         <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);border-radius:10px;padding:14px;text-align:center;"><p style="margin:0;font-size:11px;color:#fca5a5;">Net Balance</p><p style="margin:4px 0 0;font-size:22px;font-weight:700;color:${myBalance >= 0 ? '#10b981' : '#ef4444'}">${myBalance >= 0 ? '+' : ''}&#8377;${myBalance}</p></div>
       </div>
-      ${catRows ? `<p style="color:#fff;font-weight:600;margin:0 0 8px;font-size:13px;">By Category</p><table width="100%" style="border-collapse:collapse;margin-bottom:20px;background:rgba(255,255,255,0.03);border-radius:10px;overflow:hidden;">${catRows}</table>` : ''}
-      ${memRows ? `<p style="color:#fff;font-weight:600;margin:0 0 8px;font-size:13px;">Members</p><table width="100%" style="border-collapse:collapse;margin-bottom:20px;background:rgba(255,255,255,0.03);border-radius:10px;overflow:hidden;"><tr style="border-bottom:1px solid rgba(255,255,255,0.06);"><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:left;">Member</th><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:right;">Paid</th><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:right;">Share</th></tr>${memRows}</table>` : ''}
+      ${catRows ? `<p style="color:#fff;font-weight:600;margin:0 0 8px;font-size:13px;">By Category</p><table width="100%" style="border-collapse:collapse;margin-bottom:20px;">${catRows}</table>` : ''}
+      ${memRows ? `<p style="color:#fff;font-weight:600;margin:0 0 8px;font-size:13px;">Members</p><table width="100%" style="border-collapse:collapse;margin-bottom:20px;"><tr><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:left;">Member</th><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:right;">Paid</th><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:right;">Share</th></tr>${memRows}</table>` : ''}
       <a href="${BASE()}/reports" style="display:inline-block;background:linear-gradient(135deg,#4f56e8,#6574f3);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Full Report</a>`));
 };
 

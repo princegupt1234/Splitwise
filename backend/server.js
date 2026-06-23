@@ -47,32 +47,22 @@ app.get('/api/health', (req, res) => {
 
 // Temp SMTP test - remove after testing
 app.get('/api/test-email', async (req, res) => {
-  const nodemailer = require('nodemailer');
-  const dns = require('dns').promises;
+  const { Resend } = require('resend');
+  if (!process.env.RESEND_API_KEY) {
+    return res.status(500).json({ success: false, error: 'RESEND_API_KEY not set in Railway variables' });
+  }
   try {
-    const addresses = await dns.resolve4('smtp.gmail.com');
-    console.log('Resolved smtp.gmail.com to IPv4:', addresses);
-    const t = nodemailer.createTransport({
-      host: addresses[0],
-      port: 465,
-      secure: true,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-      tls: { rejectUnauthorized: false, servername: 'smtp.gmail.com' },
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 15000,
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM || 'FlatSplit <onboarding@resend.dev>',
+      to: process.env.SMTP_USER || 'princegupt3052@gmail.com',
+      subject: 'FlatSplit Email Test',
+      text: 'If you see this, Resend email is working correctly on Railway!',
     });
-    await t.verify();
-    await t.sendMail({
-      from: `"FlatSplit Test" <${process.env.SMTP_USER}>`,
-      to: process.env.SMTP_USER,
-      subject: 'FlatSplit SMTP Test',
-      text: 'If you see this, email is working correctly!',
-    });
-    res.json({ success: true, message: `Test email sent to ${process.env.SMTP_USER}`, ip: addresses[0] });
+    if (error) return res.status(500).json({ success: false, error });
+    res.json({ success: true, message: `Email sent`, id: data?.id });
   } catch (err) {
-    console.error('SMTP test error:', err.message, err.code);
-    res.status(500).json({ success: false, error: err.message, code: err.code });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
