@@ -14,12 +14,14 @@ const getTransporter = () => nodemailer.createTransport({
 
 const BASE = () => process.env.FRONTEND_URL || 'http://localhost:3000';
 
-// Verify SMTP connection on startup
+// Verify SMTP connection on startup — non-blocking, never crashes server
 if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-  getTransporter().verify((err) => {
-    if (err) console.error('SMTP connection failed:', err.message);
-    else console.log('SMTP ready ✅ emails will be sent from', process.env.SMTP_USER);
-  });
+  setTimeout(() => {
+    getTransporter().verify((err) => {
+      if (err) console.error('SMTP connection failed:', err.message);
+      else console.log('SMTP ready ✅ emails will be sent from', process.env.SMTP_USER);
+    });
+  }, 3000);
 }
 
 const send = async (to, subject, html) => {

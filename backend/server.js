@@ -50,11 +50,14 @@ app.get('/api/health', (req, res) => {
 app.get('/api/test-email', async (req, res) => {
   const nodemailer = require('nodemailer');
   const cfg = {
-    host: process.env.SMTP_HOST,
+    host: 'smtp.gmail.com',
     port: 465,
     secure: true,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     tls: { rejectUnauthorized: false },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
   };
   console.log('SMTP config:', { host: cfg.host, port: cfg.port, user: cfg.auth.user, passLen: cfg.auth.pass?.length });
   try {
@@ -68,7 +71,7 @@ app.get('/api/test-email', async (req, res) => {
     });
     res.json({ success: true, message: `Test email sent to ${process.env.SMTP_USER}` });
   } catch (err) {
-    console.error('SMTP test error:', err);
+    console.error('SMTP test error:', err.message, err.code);
     res.status(500).json({ success: false, error: err.message, code: err.code });
   }
 });
