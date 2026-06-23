@@ -9,9 +9,18 @@ const getTransporter = () => nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  tls: { rejectUnauthorized: false },
 });
 
 const BASE = () => process.env.FRONTEND_URL || 'http://localhost:3000';
+
+// Verify SMTP connection on startup
+if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+  getTransporter().verify((err) => {
+    if (err) console.error('SMTP connection failed:', err.message);
+    else console.log('SMTP ready ✅ emails will be sent from', process.env.SMTP_USER);
+  });
+}
 
 const send = async (to, subject, html) => {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
@@ -109,7 +118,7 @@ exports.sendMonthlyReport = (toEmail, { userName, groupName, month, year, totalE
       </div>
       ${catRows ? `<p style="color:#fff;font-weight:600;margin:0 0 8px;font-size:13px;">By Category</p><table width="100%" style="border-collapse:collapse;margin-bottom:20px;background:rgba(255,255,255,0.03);border-radius:10px;overflow:hidden;">${catRows}</table>` : ''}
       ${memRows ? `<p style="color:#fff;font-weight:600;margin:0 0 8px;font-size:13px;">Members</p><table width="100%" style="border-collapse:collapse;margin-bottom:20px;background:rgba(255,255,255,0.03);border-radius:10px;overflow:hidden;"><tr style="border-bottom:1px solid rgba(255,255,255,0.06);"><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:left;">Member</th><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:right;">Paid</th><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:right;">Share</th></tr>${memRows}</table>` : ''}
-      <a href="${BASE}/reports" style="display:inline-block;background:linear-gradient(135deg,#4f56e8,#6574f3);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Full Report →</a>`));
+      <a href="${BASE()}/reports" style="display:inline-block;background:linear-gradient(135deg,#4f56e8,#6574f3);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Full Report →</a>`));
 };
 
 exports.sendBudgetAlert = (toEmail, { userName, groupName, category, spent, limit }) =>
@@ -124,4 +133,4 @@ exports.sendBudgetAlert = (toEmail, { userName, groupName, category, spent, limi
           <span style="color:#a0a3b1;font-size:13px;">Budget Limit</span><span style="color:#fff;font-weight:700;">₹${limit}</span>
         </div>
       </div>
-      <a href="${BASE}/reports" style="display:inline-block;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Reports →</a>`));
+      <a href="${BASE()}/reports" style="display:inline-block;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Reports →</a>`));

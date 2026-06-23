@@ -180,7 +180,8 @@ router.post('/forgot-password', async (req, res, next) => {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(404).json({ success: false, message: 'No account found with this email' });
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    otpStore.set(email.toLowerCase(), { otp, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min
+    otpStore.set(email.toLowerCase(), { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+    console.log(`OTP for ${email.toLowerCase()}: ${otp}`); // visible in Railway logs
     await sendOTP(email.toLowerCase(), { name: user.name, otp });
     res.json({ success: true, message: 'OTP sent to your email' });
   } catch (err) { next(err); }
