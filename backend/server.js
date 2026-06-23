@@ -14,6 +14,8 @@ const adminRoutes        = require('./routes/admin');
 const notificationRoutes = require('./routes/notifications');
 const budgetRoutes       = require('./routes/budgets');
 
+const { startScheduler } = require('./services/monthlyReportScheduler');
+
 // Connect to MongoDB
 connectDB();
 
@@ -65,4 +67,5 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+  startScheduler();
 });

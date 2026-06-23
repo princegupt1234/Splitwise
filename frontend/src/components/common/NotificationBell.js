@@ -6,9 +6,11 @@ const TYPE_ICON = {
   settlement_request:  '💸',
   settlement_approved: '✅',
   settlement_rejected: '❌',
+  settlement_settled:  '🤝',
   expense_added:       '🧾',
   budget_exceeded:     '⚠️',
   group_invitation:    '🏠',
+  monthly_report:      '📊',
 };
 
 const NotificationBell = () => {

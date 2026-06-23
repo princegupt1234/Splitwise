@@ -64,6 +64,29 @@ exports.sendSettlementRejected = (toEmail, { receiverName, amount, groupName, re
       ${reason ? `<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:12px 16px;margin-bottom:20px;"><p style="margin:0;font-size:13px;color:#f87171;">Reason: ${reason}</p></div>` : ''}
       <a href="${BASE}/settlements" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Settlements →</a>`));
 
+exports.sendMonthlyReport = (toEmail, { userName, groupName, month, year, totalExpense, myPaid, myShare, myBalance, categoryWise, memberWise }) => {
+  const monthName = new Date(year, month - 1, 1).toLocaleString('en-US', { month: 'long' });
+  const catRows = (categoryWise || []).map((c) =>
+    `<tr><td style="padding:8px 12px;color:#a0a3b1;font-size:13px;">${c.category}</td><td style="padding:8px 12px;color:#fff;font-weight:600;text-align:right;">₹${c.total}</td></tr>`
+  ).join('');
+  const memRows = (memberWise || []).map((m) =>
+    `<tr><td style="padding:8px 12px;color:#a0a3b1;font-size:13px;">${m.name}</td><td style="padding:8px 12px;color:#10b981;font-weight:600;text-align:right;">₹${m.paid}</td><td style="padding:8px 12px;color:#f59e0b;font-weight:600;text-align:right;">₹${m.share}</td></tr>`
+  ).join('');
+  return send(toEmail, `📊 ${monthName} ${year} Report — ${groupName}`,
+    wrap(`<h2 style="margin:0 0 4px;color:#fff;">Monthly Summary</h2>
+      <p style="color:#a0a3b1;margin:0 0 20px;font-size:13px;">${monthName} ${year} · ${groupName}</p>
+      <p style="color:#a0a3b1;margin:0 0 16px;">Hi <strong style="color:#fff">${userName}</strong>, here's your expense summary for last month.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+        <div style="background:rgba(101,116,243,0.12);border:1px solid rgba(101,116,243,0.2);border-radius:10px;padding:14px;text-align:center;"><p style="margin:0;font-size:11px;color:#8196f8;">Total Expenses</p><p style="margin:4px 0 0;font-size:22px;font-weight:700;color:#fff;">₹${totalExpense}</p></div>
+        <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:14px;text-align:center;"><p style="margin:0;font-size:11px;color:#6ee7b7;">You Paid</p><p style="margin:4px 0 0;font-size:22px;font-weight:700;color:#10b981;">₹${myPaid}</p></div>
+        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:14px;text-align:center;"><p style="margin:0;font-size:11px;color:#fcd34d;">Your Share</p><p style="margin:4px 0 0;font-size:22px;font-weight:700;color:#f59e0b;">₹${myShare}</p></div>
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);border-radius:10px;padding:14px;text-align:center;"><p style="margin:0;font-size:11px;color:#fca5a5;">Net Balance</p><p style="margin:4px 0 0;font-size:22px;font-weight:700;color:${myBalance >= 0 ? '#10b981' : '#ef4444'}">${myBalance >= 0 ? '+' : ''}₹${myBalance}</p></div>
+      </div>
+      ${catRows ? `<p style="color:#fff;font-weight:600;margin:0 0 8px;font-size:13px;">By Category</p><table width="100%" style="border-collapse:collapse;margin-bottom:20px;background:rgba(255,255,255,0.03);border-radius:10px;overflow:hidden;">${catRows}</table>` : ''}
+      ${memRows ? `<p style="color:#fff;font-weight:600;margin:0 0 8px;font-size:13px;">Members</p><table width="100%" style="border-collapse:collapse;margin-bottom:20px;background:rgba(255,255,255,0.03);border-radius:10px;overflow:hidden;"><tr style="border-bottom:1px solid rgba(255,255,255,0.06);"><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:left;">Member</th><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:right;">Paid</th><th style="padding:8px 12px;color:#4a4d5e;font-size:11px;text-align:right;">Share</th></tr>${memRows}</table>` : ''}
+      <a href="${BASE}/reports" style="display:inline-block;background:linear-gradient(135deg,#4f56e8,#6574f3);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">View Full Report →</a>`));
+};
+
 exports.sendBudgetAlert = (toEmail, { userName, groupName, category, spent, limit }) =>
   send(toEmail, `⚠️ Budget alert — ${category} in ${groupName}`,
     wrap(`<h2 style="margin:0 0 12px;color:#fff;">Budget Exceeded!</h2>

@@ -5,7 +5,7 @@ const notificationSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     type: {
       type: String,
-      enum: ['settlement_request', 'settlement_approved', 'settlement_rejected', 'expense_added', 'budget_exceeded', 'group_invitation'],
+      enum: ['settlement_request', 'settlement_approved', 'settlement_rejected', 'expense_added', 'budget_exceeded', 'group_invitation', 'monthly_report', 'settlement_settled'],
       required: true,
     },
     title:   { type: String, required: true },

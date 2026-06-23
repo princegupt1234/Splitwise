@@ -103,6 +103,24 @@ router.put('/:id/settle', protect, async (req, res, next) => {
 
     await settlement.populate('from', 'name username');
     await settlement.populate('to', 'name username');
+
+    // notify both parties
+    const group = await Group.findById(settlement.groupId);
+    await createNotification(settlement.from._id, {
+      type: 'settlement_settled',
+      title: 'Settlement marked as settled',
+      message: `Your payment of ₹${settlement.amount} in ${group?.name || 'the group'} has been marked settled.`,
+      link: '/settlements',
+      meta: { settlementId: settlement._id },
+    });
+    await createNotification(settlement.to._id, {
+      type: 'settlement_settled',
+      title: `Payment received from ${settlement.from.name}`,
+      message: `₹${settlement.amount} settlement in ${group?.name || 'the group'} has been completed.`,
+      link: '/settlements',
+      meta: { settlementId: settlement._id },
+    });
+
     res.json({ success: true, message: 'Settlement marked as completed', settlement });
   } catch (error) { next(error); }
 });
