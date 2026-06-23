@@ -3,12 +3,12 @@ import axios from 'axios';
 const getBaseURL = () => {
   // Explicitly set in env (Vercel dashboard)
   if (process.env.REACT_APP_API_URL) return process.env.REACT_APP_API_URL;
-  // Running on Vercel production/preview — call Railway directly
-  if (window.location.hostname !== 'localhost') {
+  // Running on Vercel — call Railway directly
+  if (window.location.hostname.endsWith('.vercel.app')) {
     return 'https://splitwise-production-1549.up.railway.app/api';
   }
-  // Local dev
-  return 'http://localhost:5000/api';
+  // Local dev or LAN (mobile on same network) — use same host, port 5000
+  return `http://${window.location.hostname}:5000/api`;
 };
 
 const API = axios.create({
